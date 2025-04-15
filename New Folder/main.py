@@ -44,12 +44,12 @@ def auto_reply(message):
         except Exception as e:
             print(f"Auto-reply error: {e}")
 
-# Keep bot alive
+# Keep bot alive on Render
 keep_alive()
 
-# Start self-pinger
+# Start self-pinger (to avoid sleeping)
 from ping_self import start_pinger
 start_pinger()
 
-# Start bot
+# Start polling
 bot.infinity_polling()
