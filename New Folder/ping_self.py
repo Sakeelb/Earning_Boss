@@ -1,16 +1,11 @@
-import threading
-import time
 import requests
+import time
 
 def start_pinger():
-    def ping():
-        while True:
-            try:
-                requests.get("https://earning-boss-bot.onrender.com")
-            except Exception as e:
-                print(f"Ping failed: {e}")
-            time.sleep(600)  # Ping every 10 minutes
-
-    thread = threading.Thread(target=ping)
-    thread.daemon = True
-    thread.start()
+    while True:
+        try:
+            response = requests.get("https://earning-boss-bot.onrender.com")  # Bot ka URL yaha rakhna hai
+            print(f"Ping Response: {response.status_code}")
+        except Exception as e:
+            print(f"Ping error: {e}")
+        time.sleep(300)  # Har 5 minute me ping bheje
