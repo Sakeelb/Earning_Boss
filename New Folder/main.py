@@ -1,6 +1,5 @@
 import os
 import telebot
-from telebot import types
 from keep_alive import keep_alive
 
 # Get environment variables
@@ -24,19 +23,19 @@ def start_handler(message):
     except Exception as e:
         print(f"Error: {str(e)}")
 
-# Auto-responder for promotional messages
+# Auto-responder for messages
 @bot.message_handler(func=lambda msg: True)
 def auto_reply(message):
     text = message.text.lower()
     keywords = ["join", "earn", "channel", "t.me/", "refer", "promo", "मेरे चैनल", "invite"]
+    
     if any(keyword in text for keyword in keywords):
         try:
-            reply = "Boss >> हमारे चैनल को भी [[ Join ]] करें:"
-            markup = types.InlineKeyboardMarkup()
-            button = types.InlineKeyboardButton("Join", url="https://t.me/Earning_Pro_Smart_bot")
-            markup.add(button)
-            bot.send_message(message.chat.id, reply, reply_markup=markup)
-
+            reply = (
+                "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]] "
+                "[[ [https://t.me/Earning_Pro_Smart_bot](https://t.me/Earning_Pro_Smart_bot) ]]"
+            )
+            bot.reply_to(message, reply)
             bot.forward_message(
                 chat_id=message.chat.id,
                 from_chat_id='@All_Gift_Code_Earning',
