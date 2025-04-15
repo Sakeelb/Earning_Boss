@@ -44,23 +44,12 @@ def auto_reply(message):
         except Exception as e:
             print(f"Auto-reply error: {e}")
 
-# Keep bot alive with Flask
+# Keep bot alive
 keep_alive()
 
-# Optional self-pinger (only if using ping_self.py)
-try:
-    from ping_self import start_pinger
-    start_pinger()
-except:
-    pass
+# Start self-pinger
+from ping_self import start_pinger
+start_pinger()
 
-# Polling loop to auto-restart on crash or Render idle
-import time
-while True:
-    try:
-        print("Bot polling started...")
-        bot.infinity_polling()
-    except Exception as e:
-        print(f"Bot crashed with error: {e}")
-        print("Restarting in 15 seconds...")
-        time.sleep(15)
+# Start bot
+bot.infinity_polling()
