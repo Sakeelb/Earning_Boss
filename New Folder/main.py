@@ -33,7 +33,7 @@ def auto_reply(message):
         try:
             reply = (
                 "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]] "
-                "[[ https://t.me/Earning_Pro_Smart_bot ]]"
+                "[[ https://t.me/All_Gift_Code_Earning ]]"
             )
             bot.reply_to(message, reply)
             bot.forward_message(
