@@ -27,7 +27,7 @@ VIP_USERS = {}
 # --- Memory Optimized Functions ---
 def safe_generate(prompt):
     try:
-        return generator(prompt, max_length=30)[0]['generated_text']  # max_length घटाया
+        return generator(prompt, max_length=20)[0]['generated_text']  # max_length=20, no values above 50
     except Exception as e:
         print(f"Generation Error: {str(e)}")
         return "⚠️ सर्वर बिजी है, बाद में ट्राई करें"
