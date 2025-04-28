@@ -5,6 +5,7 @@ import threading
 from keep_alive import keep_alive
 from ping_self import start_pinger
 from transformers import pipeline
+import gc
 
 # --- Critical Fixes ---
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # GPU को डिसेबल करें
@@ -56,8 +57,6 @@ def good_morning_poster():
             time.sleep(60)
         time.sleep(30)
 
-# ... (बाकी कोड जैसा है start_handler, referral_handler, etc में कोई बदलाव नहीं)
-
 # Activity Tracking (Optimized)
 @bot.message_handler(func=lambda msg: True)
 def track_all(message):
@@ -75,4 +74,14 @@ keep_alive()
 start_pinger()
 threading.Thread(target=auto_post).start()
 threading.Thread(target=good_morning_poster).start()
+
+# Memory Cleanup after each generation
+@bot.message_handler(commands=['generate'])
+def generate_text(message):
+    prompt = message.text[10:]  # Assuming command is "/generate <text>"
+    if prompt:
+        generated_text = safe_generate(prompt)
+        bot.send_message(message.chat.id, generated_text)
+    gc.collect()  # Free memory after generation
+
 bot.infinity_polling()
