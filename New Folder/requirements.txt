@@ -5,7 +5,8 @@ gunicorn
 requests
 torch
 tensorflow
-pyTelegramBotAPI>=4.0.0
-flask>=2.0.0
-gunicorn>=20.0.0
-
+pyTelegramBotAPI==4.0.0
+flask==2.0.0
+gunicorn==20.0.0
+transformers==4.51.3
+torch==2.7.0
