@@ -27,6 +27,17 @@ def auto_post():
             bot.send_message(PROMO_CHANNEL, "🆕 नया अपडेट! @All_Gift_Code_Earning ज्वाइन करें")
         time.sleep(3600)
 
+# Good Morning Poster
+def good_morning_poster():
+    while True:
+        now = time.strftime("%H:%M")
+        if now == "05:00":
+            prompt = "Write a good morning wish for my channel members"
+            morning_msg = generator(prompt, max_length=50)[0]['generated_text']
+            bot.send_message(PROMO_CHANNEL, f"☀️ {morning_msg}")
+            time.sleep(60)
+        time.sleep(30)
+
 # Commands
 @bot.message_handler(commands=['start'])
 def start_handler(message):
@@ -76,4 +87,5 @@ def track_all(message):
 keep_alive()
 start_pinger()
 threading.Thread(target=auto_post).start()
+threading.Thread(target=good_morning_poster).start()
 bot.infinity_polling()
