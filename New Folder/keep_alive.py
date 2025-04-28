@@ -9,9 +9,10 @@ def home():
     return "Bot is Running - Boss Mode"
 
 def run():
+    port = int(os.environ.get('PORT', 10000))  # PORT यहाँ से लें
     app.run(
         host='0.0.0.0',
-        port=int(os.environ.get('PORT', 8080))  # Render.com का PORT इस्तेमाल करें
+        port=port
     )
 
 def keep_alive():
