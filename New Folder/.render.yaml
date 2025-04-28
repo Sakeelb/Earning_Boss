@@ -6,8 +6,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
     envVars:
-      - key: PORT  # Render.com का पोर्ट डिटेक्ट करने के लिए जरूरी
-        value: 10000  # या कोई भी पोर्ट (8000, 8080, 10000)
+      - key: PORT
+        value: 10000  # 8000/8080 भी चलेगा
       - key: API_ID
         sync: false
       - key: API_HASH
