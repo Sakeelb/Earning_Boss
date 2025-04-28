@@ -1,4 +1,5 @@
 pyTelegramBotAPI
-Flask
 transformers
+Flask
+gunicorn
 requests
