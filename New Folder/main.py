@@ -4,12 +4,16 @@ import time
 import threading
 from keep_alive import keep_alive
 from ping_self import start_pinger
-from transformers import pipeline
 import gc
 
-# --- Critical Fixes ---
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # GPU को डिसेबल करें
-MODEL_NAME = 'distilgpt2'  # हल्का मॉडल (GPT-2 का 50% साइज़)
+# --- AI Section (RAM Friendly) ---
+try:
+    from transformers import pipeline
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    generator = pipeline('text-generation', model='distilgpt2')
+except Exception as e:
+    generator = None
+    print("AI model couldn't load (RAM issue?):", e)
 
 # Env Variables
 API_ID = os.environ.get("API_ID")
@@ -17,22 +21,20 @@ API_HASH = os.environ.get("API_HASH")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 PROMO_CHANNEL = os.environ.get("PROMO_CHANNEL")
 
-# Init
 bot = telebot.TeleBot(BOT_TOKEN)
-generator = pipeline('text-generation', model=MODEL_NAME)  # अपडेटेड मॉडल
 referral_data = {}
 user_activity = {}
 VIP_USERS = {}
 
-# --- Memory Optimized Functions ---
 def safe_generate(prompt):
+    if generator is None:
+        return "⚠️ AI सर्वर बिजी है, बाद में ट्राई करें"
     try:
-        return generator(prompt, max_length=20)[0]['generated_text']  # max_length=20, no values above 50
+        return generator(prompt, max_length=20)[0]['generated_text']
     except Exception as e:
         print(f"Generation Error: {str(e)}")
         return "⚠️ सर्वर बिजी है, बाद में ट्राई करें"
 
-# Auto-Poster (Optimized)
 def auto_post():
     while True:
         now = time.strftime("%H:%M")
@@ -43,7 +45,6 @@ def auto_post():
                 print(f"Posting Error: {str(e)}")
         time.sleep(3600)
 
-# Good Morning Poster (Optimized)
 def good_morning_poster():
     while True:
         now = time.strftime("%H:%M")
@@ -51,37 +52,33 @@ def good_morning_poster():
             try:
                 prompt = "Write a short morning wish (under 20 words)"
                 morning_msg = safe_generate(prompt)
-                bot.send_message(PROMO_CHANNEL, f"☀️ {morning_msg[:100]}")  # लेंथ लिमिट
+                bot.send_message(PROMO_CHANNEL, f"☀️ {morning_msg[:100]}")
             except Exception as e:
                 print(f"Morning Post Error: {str(e)}")
             time.sleep(60)
         time.sleep(30)
 
-# Activity Tracking (Optimized)
 @bot.message_handler(func=lambda msg: True)
 def track_all(message):
     user_id = message.from_user.id
     user_activity[user_id] = user_activity.get(user_id, 0) + 1
-    
-    if user_activity[user_id] % 10 == 0:  # 5 से बढ़ाकर 10 करें
+    if user_activity[user_id] % 10 == 0:
         try:
             bot.send_message(PROMO_CHANNEL, f"🏆 टॉप यूजर: @{message.from_user.username}")
         except Exception as e:
             print(f"Activity Error: {str(e)}")
 
-# Start Services
-keep_alive()
-start_pinger()
-threading.Thread(target=auto_post).start()
-threading.Thread(target=good_morning_poster).start()
-
-# Memory Cleanup after each generation
 @bot.message_handler(commands=['generate'])
 def generate_text(message):
-    prompt = message.text[10:]  # Assuming command is "/generate <text>"
+    prompt = message.text[10:].strip()
     if prompt:
         generated_text = safe_generate(prompt)
         bot.send_message(message.chat.id, generated_text)
-    gc.collect()  # Free memory after generation
+    gc.collect()
 
+# Start Services
+keep_alive()
+start_pinger()
+threading.Thread(target=auto_post, daemon=True).start()
+threading.Thread(target=good_morning_poster, daemon=True).start()
 bot.infinity_polling()
