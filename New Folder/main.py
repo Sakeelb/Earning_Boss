@@ -1,6 +1,5 @@
 import os
 import telebot
-import time
 import threading
 import openai
 from keep_alive import keep_alive
@@ -18,7 +17,7 @@ user_activity = {}
 def ai_generate(prompt):
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # या "gpt-4" अगर आपकी की सपोर्ट करे
+            model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=60,
             temperature=0.7,
@@ -29,6 +28,7 @@ def ai_generate(prompt):
         return "⚠️ AI सर्वर बिजी है, बाद में ट्राई करें"
 
 def auto_post():
+    import time
     while True:
         now = time.strftime("%H:%M")
         if now in ["08:00", "12:00", "16:00"]:
@@ -39,6 +39,7 @@ def auto_post():
         time.sleep(3600)
 
 def good_morning_poster():
+    import time
     while True:
         now = time.strftime("%H:%M")
         if now == "05:00":
