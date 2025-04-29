@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: earning-boss-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: PYTORCH_CUDA_ALLOC_CONF
+        value: max_split_size_mb:32  # CUDA मेमोरी ऑप्टिमाइज़ेशन
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: PROMO_CHANNEL
+        sync: false
