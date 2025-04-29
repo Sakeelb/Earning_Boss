@@ -2,38 +2,31 @@ import os
 import telebot
 import time
 import threading
+import openai
 from keep_alive import keep_alive
 from ping_self import start_pinger
-import gc
-
-# --- AI Section (RAM Friendly) ---
-try:
-    from transformers import pipeline
-    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-    generator = pipeline('text-generation', model='distilgpt2')
-except Exception as e:
-    generator = None
-    print("AI model couldn't load (RAM issue?):", e)
 
 # Env Variables
-API_ID = os.environ.get("API_ID")
-API_HASH = os.environ.get("API_HASH")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 PROMO_CHANNEL = os.environ.get("PROMO_CHANNEL")
 
+openai.api_key = OPENAI_API_KEY
 bot = telebot.TeleBot(BOT_TOKEN)
-referral_data = {}
 user_activity = {}
-VIP_USERS = {}
 
-def safe_generate(prompt):
-    if generator is None:
-        return "⚠️ AI सर्वर बिजी है, बाद में ट्राई करें"
+def ai_generate(prompt):
     try:
-        return generator(prompt, max_length=20)[0]['generated_text']
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # या "gpt-4" अगर आपकी की सपोर्ट करे
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=60,
+            temperature=0.7,
+        )
+        return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"Generation Error: {str(e)}")
-        return "⚠️ सर्वर बिजी है, बाद में ट्राई करें"
+        print(f"OpenAI Error: {str(e)}")
+        return "⚠️ AI सर्वर बिजी है, बाद में ट्राई करें"
 
 def auto_post():
     while True:
@@ -51,7 +44,7 @@ def good_morning_poster():
         if now == "05:00":
             try:
                 prompt = "Write a short morning wish (under 20 words)"
-                morning_msg = safe_generate(prompt)
+                morning_msg = ai_generate(prompt)
                 bot.send_message(PROMO_CHANNEL, f"☀️ {morning_msg[:100]}")
             except Exception as e:
                 print(f"Morning Post Error: {str(e)}")
@@ -68,13 +61,14 @@ def track_all(message):
         except Exception as e:
             print(f"Activity Error: {str(e)}")
 
-@bot.message_handler(commands=['generate'])
+@bot.message_handler(commands=['generate', 'ai', 'ask'])
 def generate_text(message):
-    prompt = message.text[10:].strip()
+    prompt = message.text.split(' ', 1)[-1].strip()
     if prompt:
-        generated_text = safe_generate(prompt)
+        generated_text = ai_generate(prompt)
         bot.send_message(message.chat.id, generated_text)
-    gc.collect()
+    else:
+        bot.reply_to(message, "कृपया कमांड के बाद सवाल लिखें।\nउदाहरण: /ai आज मौसम कैसा है?")
 
 # Start Services
 keep_alive()
