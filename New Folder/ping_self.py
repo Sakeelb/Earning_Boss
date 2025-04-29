@@ -1,17 +1,18 @@
 import threading
 import time
 import requests
+import os
 
 def ping():
     while True:
         try:
-            requests.get("https://earning-boss-bot.onrender.com")
-            print("Pinged Successfully")
+            url = os.environ.get("RENDER_EXTERNAL_URL", "https://earning-boss-bot.onrender.com")
+            requests.get(url)
         except Exception as e:
-            print(f"Ping Error: {e}")
-        time.sleep(600)  # every 10 mins
+            print("Ping error:", e)
+        time.sleep(600)
 
 def start_pinger():
-    thread = threading.Thread(target=ping)
-    thread.daemon = True
-    thread.start()
+    t = threading.Thread(target=ping)
+    t.daemon = True
+    t.start()
