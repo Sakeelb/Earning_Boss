@@ -26,20 +26,20 @@ def good_morning_poster():
             time.sleep(60)
         time.sleep(30)
 
-# 2. /start कमांड - सिर्फ फॉरवर्ड मैसेज
+# 2. /start कमांड - सिर्फ चैनल का मैसेज फॉरवर्ड करें
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     try:
         bot.forward_message(
             chat_id=message.chat.id,
-            from_chat_id= PROMO_CHANNEL,
-            message_id=398  # अपने चैनल के फॉरवर्ड करने वाले मैसेज की ID डालें
+            from_chat_id=PROMO_CHANNEL,
+            message_id=398  # अपने चैनल के मैसेज ID से बदलें
         )
     except Exception as e:
         print(f"Start Error: {str(e)}")
-        bot.send_message(message.chat.id, f"Start Error: {str(e)}")
+        bot.send_message(message.chat.id, "कुछ समस्या हुई, कृपया बाद में प्रयास करें।")
 
-# 3. /ai कमांड - OpenAI से जवाब
+# 3. /ai कमांड - OpenAI से जवाब दें
 @bot.message_handler(commands=['ai'])
 def ai_handler(message):
     prompt = message.text.split(' ', 1)[-1].strip()
@@ -55,11 +55,11 @@ def ai_handler(message):
             bot.send_message(message.chat.id, reply)
         except Exception as e:
             print(f"OpenAI Error: {str(e)}")
-            bot.send_message(message.chat.id, "⚠️ AI सर्वर बिजी है, बाद में ट्राई करें")
+            bot.send_message(message.chat.id, "⚠️ AI सर्वर व्यस्त है, कृपया बाद में प्रयास करें।")
     else:
-        bot.reply_to(message, "कृपया /ai के बाद सवाल लिखें।\nउदाहरण: /ai आज मौसम कैसा है?")
+        bot.reply_to(message, "कृपया /ai के बाद अपना सवाल लिखें।\nउदाहरण: /ai आज मौसम कैसा है?")
 
-# 4. Keywords पर reply + forward message (दोनों साथ)
+# 4. Keywords पर reply + forward message दोनों भेजें
 @bot.message_handler(func=lambda msg: True)
 def promo_reply(message):
     text = message.text.lower()
@@ -70,25 +70,26 @@ def promo_reply(message):
     ]
     if any(keyword in text for keyword in keywords):
         try:
-            # 1. पहले reply भेजो
+            # पहले reply भेजें
             reply = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]] [[ https://t.me/All_Gift_Code_Earning ]]"
             bot.reply_to(message, reply)
-            # 2. फिर forward message भेजो
+
+            # फिर चैनल का मैसेज फॉरवर्ड करें
             bot.forward_message(
                 chat_id=message.chat.id,
-                from_chat_id= PROMO_CHANNEL,
-                message_id=398
+                from_chat_id=PROMO_CHANNEL,
+                message_id=398  # अपने चैनल के मैसेज ID से बदलें
             )
         except Exception as e:
             print(f"Promo Reply Error: {str(e)}")
-            bot.send_message(message.chat.id, f"Forward Error: {str(e)}")
+            bot.send_message(message.chat.id, "कुछ समस्या हुई, कृपया बाद में प्रयास करें।")
 
-# Keep alive और self-ping शुरू करें
+# Keep alive और self-ping शुरू करें (अगर जरूरत हो)
 keep_alive()
 start_pinger()
 
-# Good morning thread शुरू करें
+# Good morning मैसेज के लिए थ्रेड शुरू करें
 threading.Thread(target=good_morning_poster, daemon=True).start()
 
-# बॉट शुरू करें
+# बॉट को चलाएं
 bot.infinity_polling()
