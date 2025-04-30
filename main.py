@@ -6,6 +6,8 @@ from keep_alive import keep_alive
 from ping_self import start_pinger
 
 # Env Variables
+API_ID = os.environ.get("API_ID")          # अगर आप इसे यूज कर रहे हैं तो, नहीं तो छोड़ सकते हैं
+API_HASH = os.environ.get("API_HASH")      # अगर आप इसे यूज कर रहे हैं तो, नहीं तो छोड़ सकते हैं
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 PROMO_CHANNEL = os.environ.get("PROMO_CHANNEL")
@@ -33,7 +35,8 @@ def auto_post():
         now = time.strftime("%H:%M")
         if now in ["08:00", "12:00", "16:00"]:
             try:
-                bot.send_message(PROMO_CHANNEL, "🆕 नया अपडेट! @All_Gift_Code_Earning ज्वाइन करें")
+                if PROMO_CHANNEL:
+                    bot.send_message(PROMO_CHANNEL, "🆕 नया अपडेट! @All_Gift_Code_Earning ज्वाइन करें")
             except Exception as e:
                 print(f"Posting Error: {str(e)}")
         time.sleep(3600)
@@ -46,7 +49,8 @@ def good_morning_poster():
             try:
                 prompt = "Write a short morning wish (under 20 words)"
                 morning_msg = ai_generate(prompt)
-                bot.send_message(PROMO_CHANNEL, f"☀️ {morning_msg[:100]}")
+                if PROMO_CHANNEL:
+                    bot.send_message(PROMO_CHANNEL, f"☀️ {morning_msg[:100]}")
             except Exception as e:
                 print(f"Morning Post Error: {str(e)}")
             time.sleep(60)
@@ -58,7 +62,8 @@ def track_all(message):
     user_activity[user_id] = user_activity.get(user_id, 0) + 1
     if user_activity[user_id] % 10 == 0:
         try:
-            bot.send_message(PROMO_CHANNEL, f"🏆 टॉप यूजर: @{message.from_user.username}")
+            if PROMO_CHANNEL:
+                bot.send_message(PROMO_CHANNEL, f"🏆 टॉप यूजर: @{message.from_user.username}")
         except Exception as e:
             print(f"Activity Error: {str(e)}")
 
