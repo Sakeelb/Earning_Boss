@@ -1,5 +1,7 @@
 import os
 import telebot
+import threading
+import time
 import openai
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")  # अपना बॉट टोकन
@@ -17,7 +19,19 @@ KEYWORDS = [
     "bonus", "gift", "win", "offer", "loot", "free", "telegram"
 ]
 
-# /start कमांड पर सिर्फ फॉरवर्ड मैसेज
+# 1. Good Morning Auto Poster (सुबह 5 बजे)
+def good_morning_poster():
+    while True:
+        now = time.strftime("%H:%M")
+        if now == "05:00":
+            try:
+                bot.send_message(PROMO_CHANNEL, "☀️ गुड मॉर्निंग! आपका दिन शुभ हो।\n\n@All_Gift_Code_Earning जॉइन करें।")
+            except Exception as e:
+                print(f"Morning Post Error: {str(e)}")
+            time.sleep(60)
+        time.sleep(30)
+
+# 2. /start कमांड पर सिर्फ फॉरवर्ड मैसेज
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     try:
@@ -29,7 +43,7 @@ def start_handler(message):
     except Exception as e:
         bot.send_message(message.chat.id, f"Error: {e}")
 
-# /ai कमांड पर OpenAI से जवाब
+# 3. /ai कमांड पर OpenAI से जवाब
 @bot.message_handler(commands=['ai'])
 def ai_handler(message):
     prompt = message.text.split(' ', 1)[-1].strip()
@@ -48,7 +62,7 @@ def ai_handler(message):
     else:
         bot.reply_to(message, "कृपया /ai के बाद अपना सवाल लिखें।\nउदाहरण: /ai आज मौसम कैसा है?")
 
-# Keywords वाले मैसेज पर reply + forward दोनों
+# 4. Keywords वाले मैसेज पर reply + forward दोनों
 @bot.message_handler(func=lambda msg: True)
 def promo_reply(message):
     text = message.text.lower()
@@ -64,4 +78,8 @@ def promo_reply(message):
         except Exception as e:
             bot.send_message(message.chat.id, f"Error: {e}")
 
+# गुड मॉर्निंग थ्रेड शुरू करें
+threading.Thread(target=good_morning_poster, daemon=True).start()
+
+# बॉट शुरू करें
 bot.infinity_polling()
