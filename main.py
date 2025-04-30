@@ -23,7 +23,7 @@ def good_morning_poster():
                 bot.send_message(PROMO_CHANNEL, "☀️ गुड मॉर्निंग! आपका दिन शुभ हो।\n\n@All_Gift_Code_Earning जॉइन करें।")
             except Exception as e:
                 print(f"Morning Post Error: {str(e)}")
-            time.sleep(60)
+            time.sleep(60)  # एक बार भेजने के बाद 1 मिनट रुकें
         time.sleep(30)
 
 # 2. /start कमांड - सिर्फ फॉरवर्ड मैसेज
@@ -33,7 +33,7 @@ def start_handler(message):
         bot.forward_message(
             chat_id=message.chat.id,
             from_chat_id=PROMO_CHANNEL,
-            message_id=398  # अपने चैनल के उस मैसेज ID से बदलें जिसे फॉरवर्ड करना है
+            message_id=398  # अपने चैनल के जिस मैसेज को फॉरवर्ड करना है उसकी ID
         )
     except Exception as e:
         print(f"Start Error: {str(e)}")
@@ -63,8 +63,8 @@ def ai_handler(message):
 def promo_reply(message):
     text = message.text.lower()
     keywords = [
-        "subscribe", "join", "refer", "earning", "https", "invite", "@", "channel", 
-        "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो", "ज्वाइन", "चैनल", "जॉइन", "link", "promo", "reward"
+        "subscribe", "join", "refer", "earning", "https", "invite", "@", "channel",
+        "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो", "ज्वाइन", "चैनल", "जॉइन", "link", "promo", "joining", "register", "reward"
     ]
     if any(keyword in text for keyword in keywords):
         try:
@@ -80,7 +80,7 @@ def promo_reply(message):
         except Exception as e:
             print(f"Promo Reply Error: {str(e)}")
 
-# Keep alive और self-ping शुरू करें
+# Keep alive और self-ping शुरू करें (अगर Render.com या Replit पर हो)
 keep_alive()
 start_pinger()
 
