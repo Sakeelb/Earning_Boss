@@ -1,84 +1,49 @@
 import os
 import telebot
-import threading
-import openai
 from keep_alive import keep_alive
 from ping_self import start_pinger
 
 # Env Variables
-API_ID = os.environ.get("API_ID")          # अगर आप इसे यूज कर रहे हैं तो, नहीं तो छोड़ सकते हैं
-API_HASH = os.environ.get("API_HASH")      # अगर आप इसे यूज कर रहे हैं तो, नहीं तो छोड़ सकते हैं
+API_ID = os.environ.get("API_ID")
+API_HASH = os.environ.get("API_HASH")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 PROMO_CHANNEL = os.environ.get("PROMO_CHANNEL")
 
-openai.api_key = OPENAI_API_KEY
+# Init Bot
 bot = telebot.TeleBot(BOT_TOKEN)
-user_activity = {}
 
-def ai_generate(prompt):
+# Start Command
+@bot.message_handler(commands=['start'])
+def start_handler(message):
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=60,
-            temperature=0.7,
+        bot.forward_message(
+            chat_id=message.chat.id,
+            from_chat_id='@All_Gift_Code_Earning',
+            message_id=398
         )
-        return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"OpenAI Error: {str(e)}")
-        return "⚠️ AI सर्वर बिजी है, बाद में ट्राई करें"
+        print(f"Start Error: {str(e)}")
 
-def auto_post():
-    import time
-    while True:
-        now = time.strftime("%H:%M")
-        if now in ["08:00", "12:00", "16:00"]:
-            try:
-                if PROMO_CHANNEL:
-                    bot.send_message(PROMO_CHANNEL, "🆕 नया अपडेट! @All_Gift_Code_Earning ज्वाइन करें")
-            except Exception as e:
-                print(f"Posting Error: {str(e)}")
-        time.sleep(3600)
-
-def good_morning_poster():
-    import time
-    while True:
-        now = time.strftime("%H:%M")
-        if now == "05:00":
-            try:
-                prompt = "Write a short morning wish (under 20 words)"
-                morning_msg = ai_generate(prompt)
-                if PROMO_CHANNEL:
-                    bot.send_message(PROMO_CHANNEL, f"☀️ {morning_msg[:100]}")
-            except Exception as e:
-                print(f"Morning Post Error: {str(e)}")
-            time.sleep(60)
-        time.sleep(30)
-
+# Auto Reply
 @bot.message_handler(func=lambda msg: True)
-def track_all(message):
-    user_id = message.from_user.id
-    user_activity[user_id] = user_activity.get(user_id, 0) + 1
-    if user_activity[user_id] % 10 == 0:
+def auto_reply(message):
+    text = message.text.lower()
+    keywords = ["join", "earn", "channel", "t.me/", "refer", "promo", "मेरे चैनल", "invite"]
+    if any(keyword in text for keyword in keywords):
         try:
-            if PROMO_CHANNEL:
-                bot.send_message(PROMO_CHANNEL, f"🏆 टॉप यूजर: @{message.from_user.username}")
+            reply = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]] [[ https://t.me/All_Gift_Code_Earning ]]"
+            bot.reply_to(message, reply)
+            bot.forward_message(
+                chat_id=message.chat.id,
+                from_chat_id='@All_Gift_Code_Earning',
+                message_id=398
+            )
         except Exception as e:
-            print(f"Activity Error: {str(e)}")
+            print(f"Reply Error: {e}")
 
-@bot.message_handler(commands=['generate', 'ai', 'ask'])
-def generate_text(message):
-    prompt = message.text.split(' ', 1)[-1].strip()
-    if prompt:
-        generated_text = ai_generate(prompt)
-        bot.send_message(message.chat.id, generated_text)
-    else:
-        bot.reply_to(message, "कृपया कमांड के बाद सवाल लिखें।\nउदाहरण: /ai आज मौसम कैसा है?")
-
-# Start Services
+# Keep it alive
 keep_alive()
 start_pinger()
-threading.Thread(target=auto_post, daemon=True).start()
-threading.Thread(target=good_morning_poster, daemon=True).start()
+
+# Start Bot
 bot.infinity_polling()
