@@ -1,9 +1,7 @@
 import os
 import telebot
-import threading
+from flask import Flask, request
 import time
-import requests
-from flask import Flask
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 PROMO_CHANNEL = "@All_Gift_Code_Earning"
@@ -97,12 +95,20 @@ def promo_reply(message):
         except Exception as e:
             bot.send_message(message.chat.id, f"Error: {e}")
 
+@app.route('/' + BOT_TOKEN, methods=["POST"])
+def receive_update():
+    update = telebot.types.Update.de_json(request.stream.read().decode("UTF-8"))
+    bot.process_new_updates([update])
+    return "OK", 200
+
 @app.route('/')
 def home():
     return "Bot is running."
 
-threading.Thread(target=auto_poster, daemon=True).start()
-threading.Thread(target=bot.infinity_polling, daemon=True).start()
-
 if __name__ == "__main__":
+    # Set webhook
+    webhook_url = f"https://<YOUR_APP_URL>/{BOT_TOKEN}"
+    bot.set_webhook(url=webhook_url)
+
+    # Start Flask app
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
