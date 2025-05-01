@@ -102,7 +102,7 @@ def home():
     return "Bot is running."
 
 threading.Thread(target=auto_poster, daemon=True).start()
+threading.Thread(target=bot.infinity_polling, daemon=True).start()
 
 if __name__ == "__main__":
-    threading.Thread(target=bot.infinity_polling, daemon=True).start()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
