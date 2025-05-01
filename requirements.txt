@@ -1,3 +1,4 @@
 pyTelegramBotAPI
-openai
+openai==0.28
+
 flask
