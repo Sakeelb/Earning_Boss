@@ -1,4 +1,6 @@
 pyTelegramBotAPI
 openai
+pyTelegramBotAPI
+openai
 flask
 requests
