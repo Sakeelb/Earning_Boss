@@ -4,8 +4,8 @@ import threading
 import time
 import openai
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")  # अपना बॉट टोकन
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")  # OpenAI API Key
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 openai.api_key = OPENAI_API_KEY
