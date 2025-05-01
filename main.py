@@ -2,7 +2,7 @@ import os
 import telebot
 import threading
 import time
-from openai import OpenAI
+import openai
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -10,7 +10,7 @@ PROMO_CHANNEL = "@All_Gift_Code_Earning"
 FORWARD_MESSAGE_ID = 398
 
 bot = telebot.TeleBot(BOT_TOKEN)
-client = OpenAI(api_key=OPENAI_API_KEY)
+openai.api_key = OPENAI_API_KEY
 
 KEYWORDS = [
     "subscribe", "join", "joining", "refer", "register", "earning", "https", "invite", "@", "channel",
@@ -18,7 +18,7 @@ KEYWORDS = [
     "bonus", "gift", "win", "offer", "loot", "free", "telegram"
 ]
 
-# आपके दिए गए यूनिक गुड मॉर्निंग मैसेज
+# यूनिक गुड मॉर्निंग मैसेज (fallback)
 UNIQUE_MORNING_MESSAGES = [
     "Good Morning! आज ₹300 तक फायदेमंद रहेगा।",
     "Good Morning! कम से कम ₹250 का फायदा तय है आज।",
@@ -32,7 +32,7 @@ UNIQUE_MORNING_MESSAGES = [
     "Good Morning! ₹500 तक का फायदा आज तय है - रुकना नहीं।"
 ]
 
-# यूनिक गुड नाइट मैसेज
+# यूनिक गुड नाइट मैसेज (fallback)
 UNIQUE_NIGHT_MESSAGES = [
     "Good Night All Members! कल का दिन ₹500 कमाना पका है।",
     "Good Night All Members! कल ₹400 की कमाई होगी।",
@@ -46,58 +46,52 @@ UNIQUE_NIGHT_MESSAGES = [
     "Good Night All Members! कल सीधा ₹400 का फायदा मिलेगा।"
 ]
 
-def get_today_message(message_list):
-    today = int(time.strftime("%j"))  # साल का दिन (1-366)
-    return message_list[today % len(message_list)]
+def get_today_message(messages):
+    today = int(time.strftime("%j"))
+    return messages[today % len(messages)]
+
+def send_ai_message(prompt, fallback_messages, prefix_emoji):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=100,
+            temperature=0.9,
+        )
+        msg = response.choices[0].message.content.strip()
+        bot.send_message(PROMO_CHANNEL, f"{prefix_emoji} {msg}\n\n@All_Gift_Code_Earning जॉइन करें।")
+    except Exception as e:
+        fallback_msg = get_today_message(fallback_messages)
+        bot.send_message(PROMO_CHANNEL, f"{prefix_emoji} {fallback_msg}\n\n@All_Gift_Code_Earning जॉइन करें।")
+        print(f"AI Error: {e}")
 
 def auto_poster():
     posted_morning = False
     posted_night = False
     while True:
         now = time.strftime("%H:%M")
-        # सुबह 5 बजे गुड मॉर्निंग
         if now == "05:00" and not posted_morning:
-            try:
-                prompt = "हिंदी में यूनिक, एनर्जेटिक, earning motivational गुड मॉर्निंग मैसेज बनाओ (50-100 शब्दों में)।"
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=100,
-                    temperature=0.9,
-                )
-                msg = response.choices[0].message.content.strip()
-                bot.send_message(PROMO_CHANNEL, f"☀️ {msg}\n\n@All_Gift_Code_Earning जॉइन करें।")
-            except Exception as e:
-                fallback_msg = get_today_message(UNIQUE_MORNING_MESSAGES)
-                bot.send_message(PROMO_CHANNEL, f"☀️ {fallback_msg}\n\n@All_Gift_Code_Earning जॉइन करें।")
-                print(f"Morning AI Error: {e}")
+            send_ai_message(
+                "हिंदी में यूनिक, एनर्जेटिक, earning motivational गुड मॉर्निंग मैसेज बनाओ (50-100 शब्दों में)।",
+                UNIQUE_MORNING_MESSAGES,
+                "☀️"
+            )
             posted_morning = True
         elif now != "05:00":
             posted_morning = False
 
-        # रात 10 बजे गुड नाइट
         if now == "22:00" and not posted_night:
-            try:
-                prompt = "हिंदी में यूनिक, एनर्जेटिक, earning motivational गुड नाइट मैसेज बनाओ (50-100 शब्दों में)।"
-                response = client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=100,
-                    temperature=0.9,
-                )
-                msg = response.choices[0].message.content.strip()
-                bot.send_message(PROMO_CHANNEL, f"🌙 {msg}\n\n@All_Gift_Code_Earning जॉइन करें।")
-            except Exception as e:
-                fallback_msg = get_today_message(UNIQUE_NIGHT_MESSAGES)
-                bot.send_message(PROMO_CHANNEL, f"🌙 {fallback_msg}\n\n@All_Gift_Code_Earning जॉइन करें।")
-                print(f"Night AI Error: {e}")
+            send_ai_message(
+                "हिंदी में यूनिक, एनर्जेटिक, earning motivational गुड नाइट मैसेज बनाओ (50-100 शब्दों में)।",
+                UNIQUE_NIGHT_MESSAGES,
+                "🌙"
+            )
             posted_night = True
         elif now != "22:00":
             posted_night = False
 
         time.sleep(20)
 
-# /start पर चैनल का फॉरवर्ड मैसेज
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     try:
@@ -109,7 +103,6 @@ def start_handler(message):
     except Exception as e:
         bot.send_message(message.chat.id, f"Error: {e}")
 
-# Keywords वाले मैसेज पर reply + forward दोनों
 @bot.message_handler(func=lambda msg: True)
 def promo_reply(message):
     text = message.text.lower()
@@ -125,8 +118,6 @@ def promo_reply(message):
         except Exception as e:
             bot.send_message(message.chat.id, f"Error: {e}")
 
-# ऑटो पोस्टर थ्रेड शुरू करें
 threading.Thread(target=auto_poster, daemon=True).start()
 
-# बॉट शुरू करें
 bot.infinity_polling()
