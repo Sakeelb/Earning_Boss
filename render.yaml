@@ -6,10 +6,6 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
     envVars:
-      - key: API_ID
-        sync: false
-      - key: API_HASH
-        sync: false
       - key: BOT_TOKEN
         sync: false
       - key: PROMO_CHANNEL
