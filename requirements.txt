@@ -3,5 +3,3 @@ openai
 pyTelegramBotAPI
 openai
 flask
-requests
-pipinstallopenai
