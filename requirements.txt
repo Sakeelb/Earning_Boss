@@ -4,4 +4,4 @@ pyTelegramBotAPI
 openai
 flask
 requests
-pip install openai
+pipinstallopenai
