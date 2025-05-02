@@ -98,8 +98,7 @@ def promo_reply(message):
     text = message.text.lower()
     if any(keyword in text for keyword in KEYWORDS):
         try:
-            promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]] 
-            [[ https://t.me/All_Gift_Code_Earning ]]"
+            promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n[[ https://t.me/All_Gift_Code_Earning ]]"
             bot.reply_to(message, promo_text)
             bot.forward_message(
                 chat_id=message.chat.id,
