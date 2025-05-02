@@ -3,13 +3,14 @@ import telebot
 import threading
 import time
 import requests
-from flask import Flask
+from flask import Flask, request
 import pytz
 from datetime import datetime
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 PROMO_CHANNEL = "@All_Gift_Code_Earning"
 FORWARD_MESSAGE_ID = 398
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")  # Ensure you set this in your Render environment
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
@@ -59,8 +60,11 @@ def get_today_message(messages):
     return messages[today % len(messages)]
 
 def send_message_auto(fallback_messages, prefix_emoji):
-    msg = get_today_message(fallback_messages)
-    bot.send_message(PROMO_CHANNEL, f"{prefix_emoji} {msg}\n\n@All_Gift_Code_Earning जॉइन करें।")
+    try:
+        msg = get_today_message(fallback_messages)
+        bot.send_message(PROMO_CHANNEL, f"{prefix_emoji} {msg}\n\n@All_Gift_Code_Earning जॉइन करें।")
+    except Exception as e:
+        print(f"Error sending auto message: {e}")
 
 def auto_poster():
     posted_morning = False
@@ -91,7 +95,7 @@ def start_handler(message):
             message_id=FORWARD_MESSAGE_ID
         )
     except Exception as e:
-        bot.send_message(message.chat.id, f"Error: {e}")
+        bot.send_message(message.chat.id, f"Error in /start: {e}")
 
 @bot.message_handler(func=lambda msg: True)
 def promo_reply(message):
@@ -106,7 +110,14 @@ def promo_reply(message):
                 message_id=FORWARD_MESSAGE_ID
             )
         except Exception as e:
-            bot.send_message(message.chat.id, f"Error: {e}")
+            bot.send_message(message.chat.id, f"Error in promo_reply: {e}")
+
+@app.route('/', methods=['POST'])
+def webhook():
+    json_string = request.get_data().decode('utf-8')
+    update = telebot.types.Update.de_json(json_string)
+    bot.process_new_updates([update])
+    return 'OK', 200
 
 @app.route('/')
 def home():
@@ -114,5 +125,9 @@ def home():
 
 if __name__ == "__main__":
     threading.Thread(target=auto_poster, daemon=True).start()
-    threading.Thread(target=bot.infinity_polling, daemon=True).start()
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    if WEBHOOK_URL:
+        bot.set_webhook(url=f"{WEBHOOK_URL}/")
+        app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    else:
+        print("WEBHOOK_URL environment variable not set. Running with long polling (not recommended for production).")
+        bot.infinity_polling()
