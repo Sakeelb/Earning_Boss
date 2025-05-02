@@ -4,6 +4,8 @@ import threading
 import time
 import requests
 from flask import Flask
+import pytz
+from datetime import datetime
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 PROMO_CHANNEL = "@All_Gift_Code_Earning"
@@ -45,7 +47,7 @@ UNIQUE_NIGHT_MESSAGES = [
 ]
 
 def get_today_message(messages):
-    today = int(time.strftime("%j"))
+    today = int(datetime.now().strftime("%j"))
     return messages[today % len(messages)]
 
 def send_message_auto(fallback_messages, prefix_emoji):
@@ -55,8 +57,9 @@ def send_message_auto(fallback_messages, prefix_emoji):
 def auto_poster():
     posted_morning = False
     posted_night = False
+    india_timezone = pytz.timezone('Asia/Kolkata')
     while True:
-        now = time.strftime("%H:%M")
+        now = datetime.now(india_timezone).strftime("%H:%M")
         if now == "05:00" and not posted_morning:
             send_message_auto(UNIQUE_MORNING_MESSAGES, "☀️")
             posted_morning = True
@@ -101,8 +104,7 @@ def promo_reply(message):
 def home():
     return "Bot is running."
 
-threading.Thread(target=auto_poster, daemon=True).start()
-threading.Thread(target=bot.infinity_polling, daemon=True).start()
-
 if __name__ == "__main__":
+    threading.Thread(target=auto_poster, daemon=True).start()
+    threading.Thread(target=bot.infinity_polling, daemon=True).start()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
