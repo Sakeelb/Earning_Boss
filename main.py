@@ -10,7 +10,8 @@ from datetime import datetime
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 PROMO_CHANNEL = "@All_Gift_Code_Earning"
 FORWARD_MESSAGE_ID = 398
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")  # Ensure you set this in your Render environment
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
+IS_RENDER = os.environ.get("RENDER")  # Render sets this environment variable
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
@@ -125,9 +126,12 @@ def home():
 
 if __name__ == "__main__":
     threading.Thread(target=auto_poster, daemon=True).start()
-    if WEBHOOK_URL:
-        bot.set_webhook(url=f"{WEBHOOK_URL}/")
-        app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    if IS_RENDER:
+        if WEBHOOK_URL:
+            bot.set_webhook(url=f"{WEBHOOK_URL}/")
+            app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+        else:
+            print("WEBHOOK_URL environment variable not set on Render. Webhook will not be set.")
     else:
-        print("WEBHOOK_URL environment variable not set. Running with long polling (not recommended for production).")
+        print("Running with long polling (for local development).")
         bot.infinity_polling()
