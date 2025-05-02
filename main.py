@@ -16,25 +16,17 @@ app = Flask(__name__)
 
 KEYWORDS = [
     "subscribe", "join", "joining", "refer", "register", "earning", "https", "invite", "@", "channel",
-    "mere channel", "mera channel", "channel ko", "follow", "follow", "join", "channel", "join", "link", "promo", "reward",
-    "bonus", "gift", "win", "offer", "loot", "free", "telegram", "paise kaise kamaye", "online kamai",
-    "earning app", "referral", "invite", "kamai ka tarika", "free mein kamai", "kya haal hai", "kaise ho", "kitne paise", "free offer kya hai"
+    "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो", "ज्वाइन", "चैनल", "जॉइन", "link", "promo", "reward",
+    "bonus", "gift", "win", "offer", "loot", "free", "telegram",
+    "new offer", "today offer", "instant reward", "free gift code", "giveaway",
+    "task earning", "refer and earn", "daily bonus", "claim reward",
+    "kamai", "पैसे", "paise kaise", "online paise", "ghar baithe kamai",
+    "extra earning", "make money online", "earn money",
+    "withdrawal proof", "payment proof", "real earning", "trusted earning",
+    "instant payment", "upi earning", "paytm cash", "google pay offer",
+    "crypto earning", "bitcoin earning", "ethereum earning", "online job",
+    "work from home", "part time job", "full time job"
 ]
-
-EARNING_RELATED_RESPONSES = {
-    "paise kaise kamaye": "आप हमारे चैनल को ज्वाइन करके विभिन्न कमाई के अवसरों के बारे में जान सकते हैं!",
-    "online kamai": "ऑनलाइन कमाई के कई तरीके हैं, जैसे रेफरल प्रोग्राम, टास्क पूरे करना आदि। हमारे चैनल पर अपडेट रहें!",
-    "earning app": "हमारे चैनल पर आपको कुछ बेहतरीन अर्निंग ऐप्स के बारे में जानकारी मिलेगी।",
-    "referral": "रेफरल प्रोग्राम एक अच्छा तरीका है अतिरिक्त कमाई करने का। हमारे पोस्ट ध्यान से देखें।",
-    "invite": "इनवाइट करके आप बोनस और रिवॉर्ड जीत सकते हैं!",
-    "kamai ka tarika": "हमारे चैनल पर हम लगातार नए कमाई के तरीके शेयर करते रहते हैं।",
-    "free mein kamai": "फ्री में कमाई के कई ऑफर्स और लूट हमारे चैनल पर उपलब्ध हैं!",
-    "aur jankari": "अधिक जानकारी के लिए आप हमारे चैनल के पोस्ट पढ़ सकते हैं या एडमिन से संपर्क कर सकते हैं।\n\n@All_Gift_Code_Earning जॉइन करें।",
-    "kya haal hai": "मैं ठीक हूँ! आप हमारे चैनल पर नए कमाई के अवसर देखें!",
-    "kaise ho": "मैं ठीक हूँ! उम्मीद है आप भी बढ़िया होंगे। चैनल को ज्वाइन करना न भूलें!\n\n@All_Gift_Code_Earning जॉइन करें।",
-    "kitne paise": "कमाई की क्षमता ऑफर पर निर्भर करती है! चैनल पर डिटेल्स चेक करें।\n\n@All_Gift_Code_Earning जॉइन करें।",
-    "free offer kya hai": "लेटेस्ट फ्री ऑफर्स के लिए चैनल को देखते रहें!\n\n@All_Gift_Code_Earning जॉइन करें।"
-}
 
 UNIQUE_MORNING_MESSAGES = [
     "Good Morning! आज ₹300 तक फायदेमंद रहेगा।",
@@ -104,33 +96,17 @@ def start_handler(message):
 @bot.message_handler(func=lambda msg: True)
 def promo_reply(message):
     text = message.text.lower()
-    for keyword in KEYWORDS:
-        if keyword in text:
-            if keyword in EARNING_RELATED_RESPONSES:
-                try:
-                    bot.reply_to(message, EARNING_RELATED_RESPONSES[keyword])
-                    bot.forward_message(
-                        chat_id=message.chat.id,
-                        from_chat_id=PROMO_CHANNEL,
-                        message_id=FORWARD_MESSAGE_ID
-                    )
-                    return
-                except Exception as e:
-                    bot.send_message(message.chat.id, f"Error: {e}")
-                    return
-            else:
-                try:
-                    promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]] [[ https://t.me/All_Gift_Code_Earning ]]"
-                    bot.reply_to(message, promo_text)
-                    bot.forward_message(
-                        chat_id=message.chat.id,
-                        from_chat_id=PROMO_CHANNEL,
-                        message_id=FORWARD_MESSAGE_ID
-                    )
-                    return
-                except Exception as e:
-                    bot.send_message(message.chat.id, f"Error: {e}")
-                    return
+    if any(keyword in text for keyword in KEYWORDS):
+        try:
+            promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]] [[ https://t.me/All_Gift_Code_Earning ]]"
+            bot.reply_to(message, promo_text)
+            bot.forward_message(
+                chat_id=message.chat.id,
+                from_chat_id=PROMO_CHANNEL,
+                message_id=FORWARD_MESSAGE_ID
+            )
+        except Exception as e:
+            bot.send_message(message.chat.id, f"Error: {e}")
 
 @app.route('/')
 def home():
