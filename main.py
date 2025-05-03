@@ -16,19 +16,8 @@ IS_RENDER = os.environ.get("RENDER")  # Render sets this environment variable
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-KEYWORDS = [
-    "subscribe", "join", "joining", "refer", "register", "earning", "https", "invite", "@", "channel",
-    "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो", "ज्वाइन", "चैनल", "जॉइन", "link", "promo", "reward",
-    "bonus", "gift", "win", "offer", "loot", "free", "telegram",
-    "new offer", "today offer", "instant reward", "free gift code", "giveaway",
-    "task earning", "refer and earn", "daily bonus", "claim reward",
-    "kamai", "पैसे", "paise kaise", "online paise", "ghar baithe kamai",
-    "extra earning", "make money online", "earn money",
-    "withdrawal proof", "payment proof", "real earning", "trusted earning",
-    "instant payment", "upi earning", "paytm cash", "google pay offer",
-    "crypto earning", "bitcoin earning", "ethereum earning", "online job",
-    "work from home", "part time job", "full time job"
-]
+MORNING_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning.jpeg"
+NIGHT_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night.jpeg"
 
 UNIQUE_MORNING_MESSAGES = [
     "Good Morning! आज ₹300 तक फायदेमंद रहेगा।",
@@ -60,10 +49,14 @@ def get_today_message(messages):
     today = int(datetime.now().strftime("%j"))
     return messages[today % len(messages)]
 
-def send_message_auto(fallback_messages, prefix_emoji):
+def send_message_auto(fallback_messages, prefix_emoji, image_url=None):
     try:
         msg = get_today_message(fallback_messages)
-        bot.send_message(PROMO_CHANNEL, f"{prefix_emoji} {msg}")
+        caption = f"{prefix_emoji} {msg}"
+        if image_url:
+            bot.send_photo(PROMO_CHANNEL, image_url, caption=caption)
+        else:
+            bot.send_message(PROMO_CHANNEL, caption)
     except Exception as e:
         print(f"Error sending auto message: {e}")
 
@@ -74,13 +67,13 @@ def auto_poster():
     while True:
         now = datetime.now(india_timezone).strftime("%H:%M")
         if now == "05:00" and not posted_morning:
-            send_message_auto(UNIQUE_MORNING_MESSAGES, "☀️")
+            send_message_auto(UNIQUE_MORNING_MESSAGES, "☀️", MORNING_IMAGE_URL)
             posted_morning = True
         elif now != "05:00":
             posted_morning = False
 
         if now == "22:00" and not posted_night:
-            send_message_auto(UNIQUE_NIGHT_MESSAGES, "🌙")
+            send_message_auto(UNIQUE_NIGHT_MESSAGES, "🌙", NIGHT_IMAGE_URL)
             posted_night = True
         elif now != "22:00":
             posted_night = False
@@ -97,21 +90,6 @@ def start_handler(message):
         )
     except Exception as e:
         bot.send_message(message.chat.id, f"Error in /start: {e}")
-
-@bot.message_handler(func=lambda msg: True)
-def promo_reply(message):
-    text = message.text.lower()
-    if any(keyword in text for keyword in KEYWORDS):
-        try:
-            promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n[[ https://t.me/All_Gift_Code_Earning ]]"
-            bot.reply_to(message, promo_text)
-            bot.forward_message(
-                chat_id=message.chat.id,
-                from_chat_id=PROMO_CHANNEL,
-                message_id=FORWARD_MESSAGE_ID
-            )
-        except Exception as e:
-            bot.send_message(message.chat.id, f"Error in promo_reply: {e}")
 
 @app.route('/', methods=['POST'])
 def webhook():
