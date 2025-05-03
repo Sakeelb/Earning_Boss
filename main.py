@@ -63,7 +63,7 @@ def get_today_message(messages):
 def send_message_auto(fallback_messages, prefix_emoji):
     try:
         msg = get_today_message(fallback_messages)
-        bot.send_message(PROMO_CHANNEL, f"{prefix_emoji} {msg}\n\n@All_Gift_Code_Earning जॉइन करें।")
+        bot.send_message(PROMO_CHANNEL, f"{prefix_emoji} {msg}")
     except Exception as e:
         print(f"Error sending auto message: {e}")
 
