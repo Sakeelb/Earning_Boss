@@ -2,7 +2,6 @@ import os
 import telebot
 import threading
 import time
-import requests
 from flask import Flask, request
 import pytz
 from datetime import datetime
@@ -32,7 +31,8 @@ KEYWORDS = [
     "instant payment", "upi earning", "paytm cash", "google pay offer",
     "crypto earning", "bitcoin earning", "ethereum earning", "online job",
     "work from home", "part time job", "full time job",
-    "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link"
+    "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link",
+    "/join"  # <-- नया कीवर्ड
 ]
 
 UNIQUE_MORNING_MESSAGES = [
@@ -109,7 +109,7 @@ def start_handler(message):
 
 def keyword_found(text):
     text = text.lower()
-    text = re.sub(r'[^\w\s@]', '', text)  # remove punctuation except @
+    text = re.sub(r'[^\w\s@/]', '', text)  # अब स्लैश भी रहेगा
     for kw in KEYWORDS:
         if re.search(r'\b' + re.escape(kw) + r'\b', text):
             return True
@@ -130,12 +130,11 @@ def promo_reply(message):
         if keyword_found(message.text):
             promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n[[ https://t.me/All_Gift_Code_Earning ]]"
             bot.reply_to(message, promo_text)
-            # Optional: फॉरवर्ड भी करना है तो ये लाइन अनकॉमेंट करें
-            # bot.forward_message(
-            #     chat_id=message.chat.id,
-            #     from_chat_id=PROMO_CHANNEL,
-            #     message_id=FORWARD_MESSAGE_ID
-            # )
+            bot.forward_message(
+                chat_id=message.chat.id,
+                from_chat_id=PROMO_CHANNEL,
+                message_id=FORWARD_MESSAGE_ID
+            )
     except Exception as e:
         print(f"Error in promo_reply: {e}")
 
