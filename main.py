@@ -6,6 +6,7 @@ import requests
 from flask import Flask, request
 import pytz
 from datetime import datetime
+import re
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 PROMO_CHANNEL = "@All_Gift_Code_Earning"
@@ -18,6 +19,21 @@ app = Flask(__name__)
 
 MORNING_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning.jpeg"
 NIGHT_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night.jpeg"
+
+KEYWORDS = [
+    "subscribe", "join", "joining", "refer", "register", "earning", "https", "invite", "@", "channel",
+    "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो", "ज्वाइन", "चैनल", "जॉइन", "link", "promo", "reward",
+    "bonus", "gift", "win", "offer", "loot", "free", "telegram",
+    "new offer", "today offer", "instant reward", "free gift code", "giveaway",
+    "task earning", "refer and earn", "daily bonus", "claim reward",
+    "kamai", "पैसे", "paise kaise", "online paise", "ghar baithe kamai",
+    "extra earning", "make money online", "earn money",
+    "withdrawal proof", "payment proof", "real earning", "trusted earning",
+    "instant payment", "upi earning", "paytm cash", "google pay offer",
+    "crypto earning", "bitcoin earning", "ethereum earning", "online job",
+    "work from home", "part time job", "full time job",
+    "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link"
+]
 
 UNIQUE_MORNING_MESSAGES = [
     "Good Morning! आज ₹300 तक फायदेमंद रहेगा।",
@@ -90,6 +106,38 @@ def start_handler(message):
         )
     except Exception as e:
         bot.send_message(message.chat.id, f"Error in /start: {e}")
+
+def keyword_found(text):
+    text = text.lower()
+    text = re.sub(r'[^\w\s@]', '', text)  # remove punctuation except @
+    for kw in KEYWORDS:
+        if re.search(r'\b' + re.escape(kw) + r'\b', text):
+            return True
+        # कुछ कीवर्ड जैसे "refer" "joining" "join" के लिए पार्शियल मैच
+        if kw in ["refer", "join", "earn", "चैनल", "ज्वाइन"]:
+            if kw in text:
+                return True
+    # URL डिटेक्शन
+    if re.search(r'(https?://\S+|t\.me/\S+|bit\.ly/\S+)', text):
+        return True
+    return False
+
+@bot.message_handler(func=lambda msg: True)
+def promo_reply(message):
+    try:
+        if not message.text:
+            return
+        if keyword_found(message.text):
+            promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n[[ https://t.me/All_Gift_Code_Earning ]]"
+            bot.reply_to(message, promo_text)
+            # Optional: फॉरवर्ड भी करना है तो ये लाइन अनकॉमेंट करें
+            # bot.forward_message(
+            #     chat_id=message.chat.id,
+            #     from_chat_id=PROMO_CHANNEL,
+            #     message_id=FORWARD_MESSAGE_ID
+            # )
+    except Exception as e:
+        print(f"Error in promo_reply: {e}")
 
 @app.route('/', methods=['POST'])
 def webhook():
