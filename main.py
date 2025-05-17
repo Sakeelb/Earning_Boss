@@ -6,6 +6,7 @@ from flask import Flask, request
 import pytz
 from datetime import datetime
 import re
+import random
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 PROMO_CHANNEL = "@All_Gift_Code_Earning"
@@ -97,17 +98,27 @@ def auto_poster():
     india_timezone = pytz.timezone('Asia/Kolkata')
     while True:
         now = datetime.now(india_timezone).strftime("%H:%M")
-        if now == "05:00" and not posted_morning:
-            send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
-            posted_morning = True
-        elif now != "05:00":
-            posted_morning = False
+        current_minute = int(datetime.now(india_timezone).strftime("%M"))
 
-        if now == "22:00" and not posted_night:
-            send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
-            posted_night = True
-        elif now != "22:00":
-            posted_night = False
+        # Good Morning पोस्टिंग का समय
+        if now == "05":
+            if not posted_morning and 0 <= current_minute <= 9: # 5:00 से 5:09 के बीच
+                random_minute = random.randint(0, 9)
+                if current_minute == random_minute:
+                    send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
+                    posted_morning = True
+            elif now != "05":
+                posted_morning = False
+
+        # Good Night पोस्टिंग का समय
+        if now == "22":
+            if not posted_night and 0 <= current_minute <= 9: # 10:00 से 10:09 के बीच
+                random_minute = random.randint(0, 9)
+                if current_minute == random_minute:
+                    send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
+                    posted_night = True
+            elif now != "22":
+                posted_night = False
 
         time.sleep(20)
 
