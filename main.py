@@ -11,13 +11,42 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 PROMO_CHANNEL = "@All_Gift_Code_Earning"
 FORWARD_MESSAGE_ID = 398
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
-IS_RENDER = os.environ.get("RENDER")  # Render sets this environment variable
+IS_RENDER = os.environ.get("RENDER")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-MORNING_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning.jpeg"
-NIGHT_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night.jpeg"
+# 4 Good Morning इमेज URLs
+MORNING_IMAGE_URLS = [
+    "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning1.jpeg",
+    "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning2.jpeg",
+    "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning3.jpeg",
+    "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning4.jpeg"
+]
+
+# 4 Good Night इमेज URLs
+NIGHT_IMAGE_URLS = [
+    "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night1.jpeg",
+    "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night2.jpeg",
+    "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night3.jpeg",
+    "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night4.jpeg"
+]
+
+# 4 Good Morning मैसेज
+UNIQUE_MORNING_MESSAGES = [
+    "Good Morning! आज ₹300 तक फायदेमंद रहेगा।",
+    "Good Morning! कम से कम ₹250 का फायदा तय है आज।",
+    "Good Morning! दिन शुरू होते ही ₹400 का फायदा मिलेगा।",
+    "Good Morning! आज का दिन ₹500 कमाने लायक है।"
+]
+
+# 4 Good Night मैसेज
+UNIQUE_NIGHT_MESSAGES = [
+    "Good Night All Members! कल का दिन ₹500 कमाना पका है।",
+    "Good Night All Members! कल ₹400 की कमाई होगी।",
+    "Good Night All Members! कल ₹350 का फायदा मिलेगा।",
+    "Good Night All Members! कल सुबह ₹300 की कमाई शुरू होगी।"
+]
 
 KEYWORDS = [
     "subscribe", "join", "joining", "refer", "register", "earning", "https", "invite", "@", "channel",
@@ -32,47 +61,20 @@ KEYWORDS = [
     "crypto earning", "bitcoin earning", "ethereum earning", "online job",
     "work from home", "part time job", "full time job",
     "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link",
-    "/join"  # <-- नया कीवर्ड
+    "/join"
 ]
 
-UNIQUE_MORNING_MESSAGES = [
-    "Good Morning! आज ₹300 तक फायदेमंद रहेगा।",
-    "Good Morning! कम से कम ₹250 का फायदा तय है आज।",
-    "Good Morning! दिन शुरू होते ही ₹400 का फायदा मिलेगा।",
-    "Good Morning! आज का दिन ₹500 कमाने लायक है।",
-    "Good Morning! सीधा ₹350 का फायदा मिलेगा Boss।",
-    "Good Morning! ₹200 आज पक्का जेब में आएगा।",
-    "Good Morning! आज ₹450 तक फिक्स कमाई होने वाली है।",
-    "Good Morning! ₹300 की कमाई बिना रुकावट होगी आज।",
-    "Good Morning! दिन की शुरुआत ₹250 के फायदे से।",
-    "Good Morning! ₹500 तक का फायदा आज तय है - रुकना नहीं।"
-]
-
-UNIQUE_NIGHT_MESSAGES = [
-    "Good Night All Members! कल का दिन ₹500 कमाना पका है।",
-    "Good Night All Members! कल ₹400 की कमाई होगी।",
-    "Good Night All Members! कल ₹350 का फायदा मिलेगा।",
-    "Good Night All Members! कल सुबह ₹300 की कमाई शुरू होगी।",
-    "Good Night All Members! कल ₹250 का फायदा पक्का है।",
-    "Good Night All Members! कल ₹450 तक कमाने का मौका है।",
-    "Good Night All Members! कल ₹200 से शुरू होगा दिन।",
-    "Good Night All Members! कल ₹550 तक कमाने का चांस है।",
-    "Good Night All Members! कल ₹300 से ₹500 तक कमाई होगी।",
-    "Good Night All Members! कल सीधा ₹400 का फायदा मिलेगा।"
-]
-
-def get_today_message(messages):
+def get_today_index(list_length):
     today = int(datetime.now().strftime("%j"))
-    return messages[today % len(messages)]
+    return today % list_length
 
-def send_message_auto(fallback_messages, prefix_emoji, image_url=None):
+def send_message_auto(messages, images, prefix_emoji):
     try:
-        msg = get_today_message(fallback_messages)
+        idx = get_today_index(len(messages))
+        msg = messages[idx]
+        image_url = images[idx % len(images)]
         caption = f"{prefix_emoji} {msg}"
-        if image_url:
-            bot.send_photo(PROMO_CHANNEL, image_url, caption=caption)
-        else:
-            bot.send_message(PROMO_CHANNEL, caption)
+        bot.send_photo(PROMO_CHANNEL, image_url, caption=caption)
     except Exception as e:
         print(f"Error sending auto message: {e}")
 
@@ -83,13 +85,13 @@ def auto_poster():
     while True:
         now = datetime.now(india_timezone).strftime("%H:%M")
         if now == "05:00" and not posted_morning:
-            send_message_auto(UNIQUE_MORNING_MESSAGES, "☀️", MORNING_IMAGE_URL)
+            send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
             posted_morning = True
         elif now != "05:00":
             posted_morning = False
 
         if now == "22:00" and not posted_night:
-            send_message_auto(UNIQUE_NIGHT_MESSAGES, "🌙", NIGHT_IMAGE_URL)
+            send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
             posted_night = True
         elif now != "22:00":
             posted_night = False
@@ -109,15 +111,13 @@ def start_handler(message):
 
 def keyword_found(text):
     text = text.lower()
-    text = re.sub(r'[^\w\s@/]', '', text)  # अब स्लैश भी रहेगा
+    text = re.sub(r'[^\w\s@/]', '', text)
     for kw in KEYWORDS:
         if re.search(r'\b' + re.escape(kw) + r'\b', text):
             return True
-        # कुछ कीवर्ड जैसे "refer" "joining" "join" के लिए पार्शियल मैच
         if kw in ["refer", "join", "earn", "चैनल", "ज्वाइन"]:
             if kw in text:
                 return True
-    # URL डिटेक्शन
     if re.search(r'(https?://\S+|t\.me/\S+|bit\.ly/\S+)', text):
         return True
     return False
