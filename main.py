@@ -37,15 +37,28 @@ UNIQUE_MORNING_MESSAGES = [
     "Good Morning! आज ₹300 तक फायदेमंद रहेगा।",
     "Good Morning! कम से कम ₹250 का फायदा तय है आज।",
     "Good Morning! दिन शुरू होते ही ₹400 का फायदा मिलेगा।",
-    "Good Morning! आज का दिन ₹500 कमाने लायक है।"
+    "Good Morning! आज का दिन ₹500 कमाने लायक है।",
+    "Good Morning! सीधा ₹350 का फायदा मिलेगा Boss।",
+    "Good Morning! ₹200 आज पक्का जेब में आएगा।",
+    "Good Morning! आज ₹450 तक फिक्स कमाई होने वाली है।",
+    "Good Morning! ₹300 की कमाई बिना रुकावट होगी आज।",
+    "Good Morning! दिन की शुरुआत ₹250 के फायदे से।",
+    "Good Morning! ₹500 तक का फायदा आज तय है - रुकना नहीं।"
 ]
+
 
 # 4 Good Night मैसेज
 UNIQUE_NIGHT_MESSAGES = [
     "Good Night All Members! कल का दिन ₹500 कमाना पका है।",
     "Good Night All Members! कल ₹400 की कमाई होगी।",
     "Good Night All Members! कल ₹350 का फायदा मिलेगा।",
-    "Good Night All Members! कल सुबह ₹300 की कमाई शुरू होगी।"
+    "Good Night All Members! कल सुबह ₹300 की कमाई शुरू होगी।",
+    "Good Night All Members! कल ₹250 का फायदा पक्का है।",
+    "Good Night All Members! कल ₹450 तक कमाने का मौका है।",
+    "Good Night All Members! कल ₹200 से शुरू होगा दिन।",
+    "Good Night All Members! कल ₹550 तक कमाने का चांस है।",
+    "Good Night All Members! कल ₹300 से ₹500 तक कमाई होगी।",
+    "Good Night All Members! कल सीधा ₹400 का फायदा मिलेगा।"
 ]
 
 KEYWORDS = [
