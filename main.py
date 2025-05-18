@@ -47,7 +47,6 @@ UNIQUE_MORNING_MESSAGES = [
     "Good Morning! ₹500 तक का फायदा आज तय है - रुकना नहीं।"
 ]
 
-
 # 4 Good Night मैसेज
 UNIQUE_NIGHT_MESSAGES = [
     "Good Night All Members! कल का दिन ₹500 कमाना पका है।",
@@ -96,30 +95,29 @@ def auto_poster():
     posted_morning = False
     posted_night = False
     india_timezone = pytz.timezone('Asia/Kolkata')
+    
     while True:
-        now = datetime.now(india_timezone).strftime("%H:%M")
-        current_minute = int(datetime.now(india_timezone).strftime("%M"))
-
-        # Good Morning पोस्टिंग का समय
-        if now == "05":
-            if not posted_morning and 0 <= current_minute <= 9: # 5:00 से 5:09 के बीच
-                random_minute = random.randint(0, 9)
-                if current_minute == random_minute:
-                    send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
-                    posted_morning = True
-            elif now != "05":
-                posted_morning = False
-
-        # Good Night पोस्टिंग का समय
-        if now == "22":
-            if not posted_night and 0 <= current_minute <= 9: # 10:00 से 10:09 के बीच
-                random_minute = random.randint(0, 9)
-                if current_minute == random_minute:
-                    send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
-                    posted_night = True
-            elif now != "22":
-                posted_night = False
-
+        now = datetime.now(india_timezone)
+        current_hour = now.strftime("%H")
+        current_minute = int(now.strftime("%M"))
+        
+        # Reset at midnight
+        if current_hour == "00" and current_minute == 0:
+            posted_morning = False
+            posted_night = False
+        
+        # Good Morning (5:00 - 5:09 AM)
+        if current_hour == "05" and not posted_morning:
+            if 0 <= current_minute <= 9:
+                send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
+                posted_morning = True
+        
+        # Good Night (10:00 - 10:09 PM)
+        if current_hour == "22" and not posted_night:
+            if 0 <= current_minute <= 9:
+                send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
+                posted_night = True
+        
         time.sleep(20)
 
 @bot.message_handler(commands=['start'])
