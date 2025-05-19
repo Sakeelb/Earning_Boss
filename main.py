@@ -33,7 +33,7 @@ NIGHT_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night%203.jpeg"
 ]
 
-# 10 Good Morning मैसेज
+# 10 Good Morning मैसेज (Original Count)
 UNIQUE_MORNING_MESSAGES = [
     "Good Morning! आज ₹300 तक फायदेमंद रहेगा।",
     "Good Morning! कम से कम ₹250 का फायदा तय है आज।",
@@ -47,7 +47,7 @@ UNIQUE_MORNING_MESSAGES = [
     "Good Morning! ₹500 तक का फायदा आज तय है - रुकना नहीं।"
 ]
 
-# 10 Good Night मैसेज
+# 10 Good Night मैसेज (Original Count)
 UNIQUE_NIGHT_MESSAGES = [
     "Good Night All Members! कल का दिन ₹500 कमाना पका है।",
     "Good Night All Members! कल ₹400 की कमाई होगी।",
@@ -61,6 +61,7 @@ UNIQUE_NIGHT_MESSAGES = [
     "Good Night All Members! कल सीधा ₹400 का फायदा मिलेगा।"
 ]
 
+# सारे Original Keywords (जैसे पहले थे)
 KEYWORDS = [
     "subscribe", "join", "joining", "refer", "register", "earning", "https", "invite", "@", "channel",
     "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो", "ज्वाइन", "चैनल", "जॉइन", "link", "promo", "reward",
@@ -94,8 +95,8 @@ def send_message_auto(messages, images, prefix_emoji):
 def auto_poster():
     posted_morning = False
     posted_night = False
-    morning_minute = None
-    night_minute = None
+    morning_minute = random.randint(0, 10)  # 5:00-5:10 AM
+    night_minute = random.randint(0, 10)    # 10:00-10:10 PM
     india_timezone = pytz.timezone('Asia/Kolkata')
     
     while True:
@@ -103,28 +104,22 @@ def auto_poster():
         current_hour = now.strftime("%H")
         current_minute = int(now.strftime("%M"))
         
-        # Reset at midnight
+        # Midnight Reset
         if current_hour == "00" and current_minute == 0:
             posted_morning = False
             posted_night = False
-            morning_minute = None
-            night_minute = None
+            morning_minute = random.randint(0, 10)
+            night_minute = random.randint(0, 10)
         
-        # Good Morning (5:00 - 5:10 AM) with random timing
+        # Random Morning Time (5:00-5:10 AM)
         if current_hour == "05" and not posted_morning:
-            if morning_minute is None:
-                morning_minute = random.randint(0, 10)
-                print(f"Morning message scheduled for 5:{morning_minute:02d}")
-            if current_minute == morning_minute:
+            if current_minute >= morning_minute:
                 send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
                 posted_morning = True
         
-        # Good Night (10:00 - 10:10 PM) with random timing
+        # Random Night Time (10:00-10:10 PM)
         if current_hour == "22" and not posted_night:
-            if night_minute is None:
-                night_minute = random.randint(0, 10)
-                print(f"Night message scheduled for 10:{night_minute:02d}")
-            if current_minute == night_minute:
+            if current_minute >= night_minute:
                 send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
                 posted_night = True
         
