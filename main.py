@@ -6,7 +6,7 @@ from flask import Flask, request
 import pytz
 from datetime import datetime
 import re
-import random # यह सुनिश्चित कर लें कि यह इम्पोर्टेड है
+import random
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 PROMO_CHANNEL = "@All_Gift_Code_Earning"
@@ -79,17 +79,14 @@ KEYWORDS = [
 ]
 
 def get_today_index(list_length):
-    today = int(datetime.now().strftime("%j")) # साल का दिन (1-366)
-    return today % list_length # लिस्ट की लंबाई के हिसाब से इंडेक्स
+    today = int(datetime.now().strftime("%j"))
+    return today % list_length
 
 def send_message_auto(messages, images, prefix_emoji):
     try:
-        idx = get_today_index(len(messages)) # मैसेज के लिए आज का इंडेक्स
+        idx = get_today_index(len(messages))
         msg = messages[idx]
-        
-        # *** यहाँ बदलाव है: इमेज लिस्ट से एक रैंडम इमेज चुनें ***
-        image_url = random.choice(images) # अब यह पूरी तरह से रैंडम इमेज चुनेगा
-        
+        image_url = images[idx % len(images)]
         caption = f"{prefix_emoji} {msg}"
         bot.send_photo(PROMO_CHANNEL, image_url, caption=caption)
     except Exception as e:
@@ -141,16 +138,13 @@ def start_handler(message):
 
 def keyword_found(text):
     text = text.lower()
-    text = re.sub(r'[^\w\s@/]', '', text) # केवल अक्षर, अंक, whitespace, @ और / रहने दें
+    text = re.sub(r'[^\w\s@/]', '', text)
     for kw in KEYWORDS:
-        # पूरे शब्द का मिलान करें (जैसे 'join' 'joining' में नहीं)
         if re.search(r'\b' + re.escape(kw) + r'\b', text):
             return True
-        # कुछ खास कीवर्ड के लिए आंशिक मिलान भी देखें (जैसे 'चैनल' 'मेरे चैनल' में)
-        if kw in ["refer", "join", "earn", "चैनल", "ज्वाइन"]: # इन कीवर्ड के लिए आंशिक मिलान भी चेक करें
+        if kw in ["refer", "join", "earn", "चैनल", "ज्वाइन"]:
             if kw in text:
                 return True
-    # किसी भी URL या t.me लिंक का पता लगाएं
     if re.search(r'(https?://\S+|t\.me/\S+|bit\.ly/\S+)', text):
         return True
     return False
@@ -158,10 +152,8 @@ def keyword_found(text):
 @bot.message_handler(func=lambda msg: True)
 def promo_reply(message):
     try:
-        # सुनिश्चित करें कि मैसेज में टेक्स्ट हो
         if not message.text:
             return
-        
         if keyword_found(message.text):
             promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n[[ https://t.me/All_Gift_Code_Earning ]]"
             bot.reply_to(message, promo_text)
@@ -185,20 +177,13 @@ def home():
     return "Bot is running."
 
 if __name__ == "__main__":
-    # ऑटो-पोस्टर को एक अलग थ्रेड में शुरू करें
     threading.Thread(target=auto_poster, daemon=True).start()
-    
-    # वेबहुक या लॉन्ग पोलिंग के माध्यम से बॉट चलाएं
-    if IS_RENDER: # अगर Render पर डिप्लॉय किया गया है
+    if IS_RENDER:
         if WEBHOOK_URL:
             bot.set_webhook(url=f"{WEBHOOK_URL}/")
             app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
         else:
             print("WEBHOOK_URL environment variable not set on Render. Webhook will not be set.")
-            # Render पर वेबहुक URL के बिना लॉन्ग पोलिंग काम नहीं करेगी, इसलिए बॉट शुरू नहीं होगा।
-            # अगर आप इसे फिर भी चलाना चाहते हैं तो यहां bot.infinity_polling() जोड़ सकते हैं,
-            # लेकिन यह Render के लिए सुझाया नहीं गया है।
-    else: # लोकल डेवलपमेंट या अन्य वातावरण के लिए
+    else:
         print("Running with long polling (for local development).")
         bot.infinity_polling()
-
