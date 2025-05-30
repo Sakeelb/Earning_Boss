@@ -100,9 +100,31 @@ def send_message_auto(messages, images, prefix_emoji):
         msg = messages[idx]
         image_url = images[idx % len(images)]
         caption = f"{prefix_emoji} {msg}"
-        bot.send_photo(PROMO_CHANNEL, image_url, caption=caption)
+
+        # मैसेज भेजें और भेजे गए मैसेज का ऑब्जेक्ट प्राप्त करें
+        sent_message = bot.send_photo(PROMO_CHANNEL, image_url, caption=caption)
+
+        # मैसेज भेजने के तुरंत बाद उस पर रिएक्शन डालें
+        if sent_message:
+            # यहाँ आप अपने पसंदीदा रिएक्शन इमोजी डाल सकते हैं
+            # मैंने यहाँ '👍' और '❤️' डिफ़ॉल्ट रूप से डाले हैं.
+            # आप इन्हें अपनी पसंद के अनुसार बदल सकते हैं.
+            reactions_to_add = ['👍', '❤️']
+
+            for reaction_emoji in reactions_to_add:
+                try:
+                    bot.set_message_reaction(
+                        chat_id=PROMO_CHANNEL,
+                        message_id=sent_message.message_id,
+                        reaction=[{'type': 'emoji', 'emoji': reaction_emoji}]
+                    )
+                    print(f"Reaction '{reaction_emoji}' added to message ID {sent_message.message_id}")
+                except Exception as reaction_e:
+                    print(f"Error adding reaction '{reaction_emoji}': {reaction_e}")
+
     except Exception as e:
-        print(f"Error sending auto message: {e}")
+        print(f"Error sending auto message or adding reaction: {e}")
+
 
 def auto_poster():
     posted_morning = False
@@ -199,3 +221,4 @@ if __name__ == "__main__":
     else:
         print("Running with long polling (for local development).")
         bot.infinity_polling()
+
