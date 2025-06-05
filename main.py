@@ -10,7 +10,7 @@ import random
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 PROMO_CHANNEL = "@All_Gift_Code_Earning"
-FORWARD_MESSAGE_ID = 398
+FORWARD_MESSAGE_ID = 398 # This ID is no longer used for the /start command
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 IS_RENDER = os.environ.get("RENDER")
 
@@ -159,15 +159,19 @@ def auto_poster():
         
         time.sleep(20)
 
-# START_MESSAGE_TEXT वेरिएबल में अपना मैसेज डालें
-START_MESSAGE_TEXT = "यहां आपका स्वागत संदेश है! हमारे चैनल को ज्वाइन करें: https://t.me/All_Gift_Code_Earning"
-
+# The new, bolded Hinglish message for /start
+START_MESSAGE_TEXT = """
+*Urgent Update:*
+*Naya Gift Code / Offer Live ho chuka hai.*
+*Isko paane ke liye hamare channel se juden:*
+*👉 @All_Gift_Code_Earning*
+"""
 
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     try:
-        # फॉरवर्ड मैसेज के बजाय सीधा टेक्स्ट मैसेज भेजें
-        bot.send_message(message.chat.id, START_MESSAGE_TEXT)
+        # Send the custom, bolded message directly
+        bot.send_message(message.chat.id, START_MESSAGE_TEXT, parse_mode='Markdown')
     except Exception as e:
         bot.send_message(message.chat.id, f"Error in /start: {e}")
 
@@ -192,12 +196,11 @@ def promo_reply(message):
         if keyword_found(message.text):
             promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n[[ https://t.me/All_Gift_Code_Earning ]]"
             bot.reply_to(message, promo_text)
-            # यहाँ भी फॉरवर्ड मैसेज हटा दिया गया है, अगर आप इसे भी हटाना चाहते हैं।
-            # bot.forward_message(
-            #     chat_id=message.chat.id,
-            #     from_chat_id=PROMO_CHANNEL,
-            #     message_id=FORWARD_MESSAGE_ID
-            # )
+            bot.forward_message(
+                chat_id=message.chat.id,
+                from_chat_id=PROMO_CHANNEL,
+                message_id=FORWARD_MESSAGE_ID
+            )
     except Exception as e:
         print(f"Error in promo_reply: {e}")
 
