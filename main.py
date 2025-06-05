@@ -203,11 +203,7 @@ def promo_reply(message):
                 parse_mode='Markdown',
                 reply_to_message_id=message.message_id # Reply to the user's message
             )
-            #bot.forward_message( # Removed forward message
-            #    chat_id=message.chat.id,
-            #    from_chat_id=PROMO_CHANNEL,
-            #    message_id=FORWARD_MESSAGE_ID
-            #)
+            # The previous separate text reply and forward message are no longer needed here.
     except Exception as e:
         print(f"Error in promo_reply: {e}")
 
@@ -233,3 +229,4 @@ if __name__ == "__main__":
     else:
         print("Running with long polling (for local development).")
         bot.infinity_polling()
+
