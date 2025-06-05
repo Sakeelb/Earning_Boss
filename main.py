@@ -194,7 +194,7 @@ def promo_reply(message):
         if not message.text:
             return
         if keyword_found(message.text):
-            promo_caption = "*[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]* \n *[[ https://t.me/All_Gift_Code_Earning ]]*"
+            promo_caption = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n *[[ https://t.me/All_Gift_Code_Earning ]]*"
             # Send the image with the promotional message as its caption
             bot.send_photo(
                 chat_id=message.chat.id,
