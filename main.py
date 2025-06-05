@@ -164,7 +164,7 @@ START_MESSAGE_TEXT = """
 *Urgent Update:*
 *Naya Gift Code / Offer Live ho chuka hai.*
 *Isko paane ke liye hamare channel se juden:*
-*👉 @All_Gift_Code_Earning*
+*👉 [[_@All_Gift_Code_Earning_]]*
 """
 
 @bot.message_handler(commands=['start'])
