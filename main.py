@@ -194,9 +194,15 @@ def promo_reply(message):
         if not message.text:
             return
         if keyword_found(message.text):
-            promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n[[ https://t.me/All_Gift_Code_Earning ]]"
-            bot.reply_to(message, promo_text, parse_mode='Markdown')
-            bot.send_photo(message.chat.id, "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png")
+            promo_caption = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n[[ https://t.me/All_Gift_Code_Earning ]]"
+            # Send the image with the promotional message as its caption
+            bot.send_photo(
+                chat_id=message.chat.id,
+                photo="https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png",
+                caption=promo_caption,
+                parse_mode='Markdown',
+                reply_to_message_id=message.message_id # Reply to the user's message
+            )
             #bot.forward_message( # Removed forward message
             #    chat_id=message.chat.id,
             #    from_chat_id=PROMO_CHANNEL,
