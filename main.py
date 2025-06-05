@@ -159,14 +159,15 @@ def auto_poster():
         
         time.sleep(20)
 
+# START_MESSAGE_TEXT वेरिएबल में अपना मैसेज डालें
+START_MESSAGE_TEXT = "यहां आपका स्वागत संदेश है! हमारे चैनल को ज्वाइन करें: https://t.me/All_Gift_Code_Earning"
+
+
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     try:
-        bot.forward_message(
-            chat_id=message.chat.id,
-            from_chat_id=PROMO_CHANNEL,
-            message_id=FORWARD_MESSAGE_ID
-        )
+        # फॉरवर्ड मैसेज के बजाय सीधा टेक्स्ट मैसेज भेजें
+        bot.send_message(message.chat.id, START_MESSAGE_TEXT)
     except Exception as e:
         bot.send_message(message.chat.id, f"Error in /start: {e}")
 
@@ -191,11 +192,12 @@ def promo_reply(message):
         if keyword_found(message.text):
             promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n[[ https://t.me/All_Gift_Code_Earning ]]"
             bot.reply_to(message, promo_text)
-            bot.forward_message(
-                chat_id=message.chat.id,
-                from_chat_id=PROMO_CHANNEL,
-                message_id=FORWARD_MESSAGE_ID
-            )
+            # यहाँ भी फॉरवर्ड मैसेज हटा दिया गया है, अगर आप इसे भी हटाना चाहते हैं।
+            # bot.forward_message(
+            #     chat_id=message.chat.id,
+            #     from_chat_id=PROMO_CHANNEL,
+            #     message_id=FORWARD_MESSAGE_ID
+            # )
     except Exception as e:
         print(f"Error in promo_reply: {e}")
 
@@ -221,4 +223,3 @@ if __name__ == "__main__":
     else:
         print("Running with long polling (for local development).")
         bot.infinity_polling()
-
