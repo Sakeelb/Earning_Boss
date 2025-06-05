@@ -47,30 +47,30 @@ NIGHT_IMAGE_URLS = [
 
 # 10 Good Morning मैसेज (Original Count)
 UNIQUE_MORNING_MESSAGES = [
-    "Good Morning! आज ₹300 तक फायदेमंद रहेगा।",
-    "Good Morning! कम से कम ₹250 का फायदा तय है आज।",
-    "Good Morning! दिन शुरू होते ही ₹400 का फायदा मिलेगा।",
-    "Good Morning! आज का दिन ₹500 कमाने लायक है।",
-    "Good Morning! सीधा ₹350 का फायदा मिलेगा Boss।",
-    "Good Morning! ₹200 आज पक्का जेब में आएगा।",
-    "Good Morning! आज ₹450 तक फिक्स कमाई होने वाली है।",
-    "Good Morning! ₹300 की कमाई बिना रुकावट होगी आज।",
-    "Good Morning! दिन की शुरुआत ₹250 के फायदे से।",
-    "Good Morning! ₹500 तक का फायदा आज तय है - रुकना नहीं।"
+    "*Good Morning!* आज ₹300 तक फायदेमंद रहेगा।",
+    "*Good Morning!* कम से कम ₹250 का फायदा तय है आज।",
+    "*Good Morning!* दिन शुरू होते ही ₹400 का फायदा मिलेगा।",
+    "*Good Morning!* आज का दिन ₹500 कमाने लायक है।",
+    "*Good Morning!* सीधा ₹350 का फायदा मिलेगा Boss।",
+    "*Good Morning!* ₹200 आज पक्का जेब में आएगा।",
+    "*Good Morning!* आज ₹450 तक फिक्स कमाई होने वाली है।",
+    "*Good Morning!* ₹300 की कमाई बिना रुकावट होगी आज।",
+    "*Good Morning!* दिन की शुरुआत ₹250 के फायदे से।",
+    "*Good Morning!* ₹500 तक का फायदा आज तय है - रुकना नहीं।"
 ]
 
 # 10 Good Night मैसेज (Original Count)
 UNIQUE_NIGHT_MESSAGES = [
-    "Good Night All Members! कल का दिन ₹500 कमाना पका है।",
-    "Good Night All Members! कल ₹400 की कमाई होगी।",
-    "Good Night All Members! कल ₹350 का फायदा मिलेगा।",
-    "Good Night All Members! कल सुबह ₹300 की कमाई शुरू होगी।",
-    "Good Night All Members! कल ₹250 का फायदा पक्का है।",
-    "Good Night All Members! कल ₹450 तक कमाने का मौका है।",
-    "Good Night All Members! कल ₹200 से शुरू होगा दिन।",
-    "Good Night All Members! कल ₹550 तक कमाने का चांस है।",
-    "Good Night All Members! कल ₹300 से ₹500 तक कमाई होगी।",
-    "Good Night All Members! कल सीधा ₹400 का फायदा मिलेगा।"
+    "*Good Night All Members!* कल का दिन ₹500 कमाना पका है।",
+    "*Good Night All Members!* कल ₹400 की कमाई होगी।",
+    "*Good Night All Members!* कल ₹350 का फायदा मिलेगा।",
+    "*Good Night All Members!* कल सुबह ₹300 की कमाई शुरू होगी।",
+    "*Good Night All Members!* कल ₹250 का फायदा पक्का है।",
+    "*Good Night All Members!* कल ₹450 तक कमाने का मौका है।",
+    "*Good Night All Members!* कल ₹200 से शुरू होगा दिन।",
+    "*Good Night All Members!* कल ₹550 तक कमाने का चांस है।",
+    "*Good Night All Members!* कल ₹300 से ₹500 तक कमाई होगी।",
+    "*Good Night All Members!* कल सीधा ₹400 का फायदा मिलेगा।"
 ]
 
 # सारे Original Keywords (जैसे पहले थे)
@@ -102,7 +102,7 @@ def send_message_auto(messages, images, prefix_emoji):
         caption = f"{prefix_emoji} {msg}"
 
         # मैसेज भेजें और भेजे गए मैसेज का ऑब्जेक्ट प्राप्त करें
-        sent_message = bot.send_photo(PROMO_CHANNEL, image_url, caption=caption)
+        sent_message = bot.send_photo(PROMO_CHANNEL, image_url, caption=caption, parse_mode='Markdown')
 
         # मैसेज भेजने के तुरंत बाद उस पर रिएक्शन डालें
         if sent_message:
@@ -164,7 +164,7 @@ START_MESSAGE_TEXT = """
 *Urgent Update:*
 *Naya Gift Code / Offer Live ho chuka hai.*
 *Isko paane ke liye hamare channel se juden:*
-*👉 [[ @All_Gift_Code_Earning ]]*
+*[[ @All_Gift_Code_Earning ]]*
 """
 
 @bot.message_handler(commands=['start'])
@@ -195,12 +195,13 @@ def promo_reply(message):
             return
         if keyword_found(message.text):
             promo_text = "[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]\n[[ https://t.me/All_Gift_Code_Earning ]]"
-            bot.reply_to(message, promo_text)
-            bot.forward_message(
-                chat_id=message.chat.id,
-                from_chat_id=PROMO_CHANNEL,
-                message_id=FORWARD_MESSAGE_ID
-            )
+            bot.reply_to(message, promo_text, parse_mode='Markdown')
+            bot.send_photo(message.chat.id, "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png")
+            #bot.forward_message( # Removed forward message
+            #    chat_id=message.chat.id,
+            #    from_chat_id=PROMO_CHANNEL,
+            #    message_id=FORWARD_MESSAGE_ID
+            #)
     except Exception as e:
         print(f"Error in promo_reply: {e}")
 
