@@ -70,7 +70,7 @@ UNIQUE_NIGHT_MESSAGES = [
     "*Good Night All Members!* कल ₹200 से शुरू होगा दिन।",
     "*Good Night All Members!* कल ₹550 तक कमाने का चांस है।",
     "*Good Night All Members!* कल ₹300 से ₹500 तक कमाई होगी।",
-    "*Good Night All Members!* कल सीधा ₹400 का फायदा मिलेगा。"
+    "*Good Night All Members!* कल सीधा ₹400 का फायदा मिलेगा।"
 ]
 
 # सारे Original Keywords (जैसे पहले थे)
@@ -166,12 +166,20 @@ START_MESSAGE_TEXT = """
 *Isko paane ke liye hamare channel se juden:*
 *[[ @All_Gift_Code_Earning ]]*
 """
+# Image URL for the promotional message (used in both /start and keyword reply)
+PROMO_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png"
 
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     try:
         # Send the custom, bolded message directly
-        bot.send_message(message.chat.id, START_MESSAGE_TEXT, parse_mode='Markdown')
+        promo_caption = "*[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]*\n*[[ https://t.me/All_Gift_Code_Earning ]]*"
+        bot.send_photo(
+            chat_id=message.chat.id,
+            photo=PROMO_IMAGE_URL,
+            caption=promo_caption,
+            parse_mode='Markdown'
+        )
     except Exception as e:
         bot.send_message(message.chat.id, f"Error in /start: {e}")
 
@@ -200,7 +208,7 @@ def promo_reply(message):
             # Send the image with the bolded promotional message as its caption
             bot.send_photo(
                 chat_id=message.chat.id,
-                photo="https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png",
+                photo=PROMO_IMAGE_URL, # Using the shared PROMO_IMAGE_URL
                 caption=promo_caption,
                 parse_mode='Markdown',
                 reply_to_message_id=message.message_id # Reply to the user's message
