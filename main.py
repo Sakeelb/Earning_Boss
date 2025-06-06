@@ -75,7 +75,7 @@ UNIQUE_NIGHT_MESSAGES = [
 
 # सारे Original Keywords (जैसे पहले थे)
 KEYWORDS = [
-    "subscribe", "join", "joining", "refer", "register", "earning", "https", "invite", "@", "channel",
+    "subscribe", "chat", "chat hindi", "reply", "join", "joining", "refer", "register", "earning", "https", "invite", "@", "channel",
     "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो", "ज्वाइन", "चैनल", "जॉइन", "link", "promo", "reward",
     "bonus", "gift", "win", "offer", "loot", "free", "telegram",
     "new offer", "today offer", "instant reward", "free gift code", "giveaway",
