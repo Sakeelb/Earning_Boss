@@ -166,18 +166,18 @@ START_MESSAGE_TEXT = """
 *Isko paane ke liye hamare channel se juden:*
 *[[ @All_Gift_Code_Earning ]]*
 """
-# Image URL for the promotional message (used in both /start and keyword reply)
-PROMO_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png"
+
+# Define the image URL for both cases
+PROMOTIONAL_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png"
 
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     try:
-        # Send the custom, bolded message directly
-        promo_caption = "*[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]*\n*[[ https://t.me/All_Gift_Code_Earning ]]*"
+        # Send the custom, bolded message with the specific image
         bot.send_photo(
             chat_id=message.chat.id,
-            photo=PROMO_IMAGE_URL,
-            caption=promo_caption,
+            photo=PROMOTIONAL_IMAGE_URL, # Use the defined image URL
+            caption=START_MESSAGE_TEXT,
             parse_mode='Markdown'
         )
     except Exception as e:
@@ -208,7 +208,7 @@ def promo_reply(message):
             # Send the image with the bolded promotional message as its caption
             bot.send_photo(
                 chat_id=message.chat.id,
-                photo=PROMO_IMAGE_URL, # Using the shared PROMO_IMAGE_URL
+                photo=PROMOTIONAL_IMAGE_URL, # Use the defined image URL
                 caption=promo_caption,
                 parse_mode='Markdown',
                 reply_to_message_id=message.message_id # Reply to the user's message
@@ -238,4 +238,4 @@ if __name__ == "__main__":
     else:
         print("Running with long polling (for local development).")
         bot.infinity_polling()
-
+)
