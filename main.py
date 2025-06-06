@@ -70,7 +70,7 @@ UNIQUE_NIGHT_MESSAGES = [
     "*Good Night All Members!* कल ₹200 से शुरू होगा दिन।",
     "*Good Night All Members!* कल ₹550 तक कमाने का चांस है।",
     "*Good Night All Members!* कल ₹300 से ₹500 तक कमाई होगी।",
-    "*Good Night All Members!* कल सीधा ₹400 का फायदा मिलेगा।"
+    "*Good Night All Members!* कल सीधा ₹400 का फायदा मिलेगा。"
 ]
 
 # सारे Original Keywords (जैसे पहले थे)
@@ -167,19 +167,14 @@ START_MESSAGE_TEXT = """
 *[[ @All_Gift_Code_Earning ]]*
 """
 
-# Define the image URL for both cases
-PROMOTIONAL_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png"
+# Image URL for the /start command
+START_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png"
 
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     try:
-        # Send the custom, bolded message with the specific image
-        bot.send_photo(
-            chat_id=message.chat.id,
-            photo=PROMOTIONAL_IMAGE_URL, # Use the defined image URL
-            caption=START_MESSAGE_TEXT,
-            parse_mode='Markdown'
-        )
+        # Send the image with the custom, bolded message as its caption
+        bot.send_photo(message.chat.id, START_IMAGE_URL, caption=START_MESSAGE_TEXT, parse_mode='Markdown')
     except Exception as e:
         bot.send_message(message.chat.id, f"Error in /start: {e}")
 
@@ -208,7 +203,7 @@ def promo_reply(message):
             # Send the image with the bolded promotional message as its caption
             bot.send_photo(
                 chat_id=message.chat.id,
-                photo=PROMOTIONAL_IMAGE_URL, # Use the defined image URL
+                photo="https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png",
                 caption=promo_caption,
                 parse_mode='Markdown',
                 reply_to_message_id=message.message_id # Reply to the user's message
@@ -238,4 +233,3 @@ if __name__ == "__main__":
     else:
         print("Running with long polling (for local development).")
         bot.infinity_polling()
-)
