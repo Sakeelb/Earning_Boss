@@ -8,18 +8,19 @@ from datetime import datetime
 import re
 import random
 
-# पर्यावरण वैरिएबल्स से BOT_TOKEN और WEBHOOK_URL प्राप्त करें
+# Environment variables
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
-PROMO_CHANNEL = "@All_Gift_Code_Earning"
-# FORWARD_MESSAGE_ID = 398 # यह ID अब /start कमांड के लिए उपयोग नहीं की जाती है
+PROMO_CHANNEL = "@All_Gift_Code_Earning" # Your promotion channel
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
-IS_RENDER = os.environ.get("RENDER") # यह दर्शाता है कि क्या बॉट Render पर डिप्लॉय किया गया है
+IS_RENDER = os.environ.get("RENDER") # Check if running on Render
 
-# TeleBot और Flask ऐप को इनिशियलाइज़ करें
+# Initialize bot and Flask app
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# 10 Good Morning इमेज URLs (सुनिश्चित करें कि सभी URL अद्वितीय और वैध हों)
+# --- Image and Message Data ---
+
+# Good Morning Image URLs
 MORNING_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning.jpeg",
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning%201.jpeg",
@@ -33,7 +34,7 @@ MORNING_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning%209.jpeg"
 ]
 
-# 10 Good Night इमेज URLs (सुनिश्चित करें कि सभी URL अद्वितीय और वैध हों)
+# Good Night Image URLs
 NIGHT_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night.jpeg",
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night%201.jpeg",
@@ -47,7 +48,7 @@ NIGHT_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night%209.jpeg"
 ]
 
-# 10 Good Morning मैसेज
+# Good Morning Messages
 UNIQUE_MORNING_MESSAGES = [
     "*Good Morning!* आज ₹300 तक फायदेमंद रहेगा।",
     "*Good Morning!* कम से कम ₹250 का फायदा तय है आज।",
@@ -61,7 +62,7 @@ UNIQUE_MORNING_MESSAGES = [
     "*Good Morning!* ₹500 तक का फायदा आज तय है - रुकना नहीं।"
 ]
 
-# 10 Good Night मैसेज
+# Good Night Messages
 UNIQUE_NIGHT_MESSAGES = [
     "*Good Night All Members!* कल का दिन ₹500 कमाना पका है।",
     "*Good Night All Members!* कल ₹400 की कमाई होगी।",
@@ -72,10 +73,10 @@ UNIQUE_NIGHT_MESSAGES = [
     "*Good Night All Members!* कल ₹200 से शुरू होगा दिन।",
     "*Good Night All Members!* कल ₹550 तक कमाने का चांस है।",
     "*Good Night All Members!* कल ₹300 से ₹500 तक कमाई होगी।",
-    "*Good Night All Members!* कल सीधा ₹400 का फायदा मिलेगा।"
+    "*Good Night All Members!* कल सीधा ₹400 का फायदा मिलेगा。"
 ]
 
-# सारे Original Keywords (जैसे पहले थे)
+# Keywords for promotional replies
 KEYWORDS = [
     "subscribe", "chat", "chat hindi", "reply", "join", "joining", "refer", "register", "earning", "https", "invite", "@", "channel",
     "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो", "ज्वाइन", "चैनल", "जॉइन", "link", "promo", "reward",
@@ -92,183 +93,216 @@ KEYWORDS = [
     "/join"
 ]
 
-def get_today_index(list_length):
-    """आज की तारीख के आधार पर सूची का इंडेक्स प्राप्त करता है।"""
-    today = int(datetime.now().strftime("%j")) # वर्ष का दिन (1-366)
-    return today % list_length
-
-def send_message_auto(messages, images, prefix_emoji):
-    """ऑटोमैटिक मैसेज और इमेज को प्रोमो चैनल पर भेजता है और रिएक्शन जोड़ता है।"""
-    try:
-        idx = get_today_index(len(messages))
-        msg = messages[idx]
-        image_url = images[idx % len(images)] # इमेज सूची की लंबाई के भीतर इंडेक्स सुनिश्चित करें
-        caption = f"{prefix_emoji} {msg}"
-
-        # मैसेज भेजें और भेजे गए मैसेज का ऑब्जेक्ट प्राप्त करें
-        sent_message = bot.send_photo(PROMO_CHANNEL, image_url, caption=caption, parse_mode='Markdown')
-
-        # यदि मैसेज सफलतापूर्वक भेजा गया है, तो रिएक्शन जोड़ें
-        if sent_message:
-            reactions_to_add = ['👍', '❤️'] # अपनी पसंद के अनुसार रिएक्शन बदलें
-
-            for reaction_emoji in reactions_to_add:
-                try:
-                    bot.set_message_reaction(
-                        chat_id=PROMO_CHANNEL,
-                        message_id=sent_message.message_id,
-                        reaction=[{'type': 'emoji', 'emoji': reaction_emoji}] # टेलीबॉट के लिए सही फॉर्मेट
-                    )
-                    print(f"Reaction '{reaction_emoji}' added to message ID {sent_message.message_id}")
-                except Exception as reaction_e:
-                    print(f"Error adding reaction '{reaction_emoji}': {reaction_e}")
-
-    except Exception as e:
-        print(f"Error sending auto message or adding reaction: {e}")
-
-def auto_poster():
-    """स्वचालित रूप से सुबह और रात के संदेशों को पोस्ट करता है।"""
-    posted_morning = False
-    posted_night = False
-    # सुबह और रात के मैसेज भेजने के लिए रैंडम मिनट सेट करें (हर दिन अलग)
-    morning_minute = random.randint(0, 10)  # 5:00-5:10 AM
-    night_minute = random.randint(0, 10)    # 10:00-10:10 PM
-    india_timezone = pytz.timezone('Asia/Kolkata')
-    
-    while True:
-        now = datetime.now(india_timezone)
-        current_hour = now.strftime("%H")
-        current_minute = int(now.strftime("%M"))
-        
-        # आधी रात को रीसेट करें ताकि अगले दिन फिर से मैसेज भेजे जा सकें
-        if current_hour == "00" and current_minute == 0:
-            posted_morning = False
-            posted_night = False
-            morning_minute = random.randint(0, 10)
-            night_minute = random.randint(0, 10)
-            print("Midnight reset completed. Ready for new day's posts.")
-        
-        # सुबह के मैसेज के लिए रैंडम टाइम (5:00-5:10 AM)
-        if current_hour == "05" and not posted_morning:
-            if current_minute >= morning_minute:
-                print(f"Attempting to send morning message at {now.strftime('%H:%M')}")
-                send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
-                posted_morning = True
-                print("Morning message sent.")
-        
-        # रात के मैसेज के लिए रैंडम टाइम (10:00-10:10 PM)
-        if current_hour == "22" and not posted_night:
-            if current_minute >= night_minute:
-                print(f"Attempting to send night message at {now.strftime('%H:%M')}")
-                send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
-                posted_night = True
-                print("Night message sent.")
-        
-        # हर 20 सेकंड में चेक करें (आप चाहें तो इस अंतराल को बढ़ा या घटा सकते हैं)
-        time.sleep(20)
-
-# /start कमांड के लिए नया, बोल्ड हिंग्लिश मैसेज
+# Start command message and image
 START_MESSAGE_TEXT = """
 *Urgent Update:*
 *Naya Gift Code / Offer Live ho chuka hai.*
 *Isko paane ke liye hamare channel se juden:*
 *[[ @All_Gift_Code_Earning ]]*
 """
-
-# /start कमांड के लिए इमेज URL
 START_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png"
 
-@bot.message_handler(commands=['start'])
-def start_handler(message):
-    """/start कमांड को हैंडल करता है और एक इमेज के साथ मैसेज भेजता है।"""
+# --- Helper Functions ---
+
+def get_today_index(list_length):
+    """
+    Calculates an index based on the current day of the year.
+    This ensures a different message/image is used each day in a cycle.
+    """
+    today = int(datetime.now().strftime("%j")) # Day of the year (1-366)
+    return today % list_length
+
+def send_message_auto(messages, images, prefix_emoji):
+    """
+    Sends an automated message with an image and reaction to the promo channel.
+    """
     try:
-        # इमेज को कस्टम, बोल्ड मैसेज को कैप्शन के रूप में भेजें
-        bot.send_photo(message.chat.id, START_IMAGE_URL, caption=START_MESSAGE_TEXT, parse_mode='Markdown')
-        print(f"Start command received from {message.chat.id}. Sent welcome message.")
+        # Get message and image based on today's index
+        idx = get_today_index(len(messages))
+        msg = messages[idx]
+        image_url = images[idx % len(images)] # Ensure image index loops correctly
+        caption = f"{prefix_emoji} {msg}"
+
+        print(f"Attempting to send message to {PROMO_CHANNEL} with caption: {caption}")
+        # Send the message and get the sent message object
+        sent_message = bot.send_photo(PROMO_CHANNEL, image_url, caption=caption, parse_mode='Markdown')
+        print(f"Message sent! Message ID: {sent_message.message_id}")
+
+        # Add reactions to the sent message
+        if sent_message:
+            reactions_to_add = ['👍', '❤️'] # Customize your reactions here
+            for reaction_emoji in reactions_to_add:
+                try:
+                    bot.set_message_reaction(
+                        chat_id=PROMO_CHANNEL,
+                        message_id=sent_message.message_id,
+                        reaction=[{'type': 'emoji', 'emoji': reaction_emoji}]
+                    )
+                    print(f"Reaction '{reaction_emoji}' added to message ID {sent_message.message_id}")
+                except Exception as reaction_e:
+                    print(f"Error adding reaction '{reaction_emoji}' to message ID {sent_message.message_id}: {reaction_e}")
+
     except Exception as e:
-        print(f"Error in /start handler for chat ID {message.chat.id}: {e}")
-        bot.send_message(message.chat.id, f"Error in /start: {e}")
+        print(f"Error sending auto message or adding reaction: {e}")
+
+def auto_poster():
+    """
+    Thread function to periodically send Good Morning/Night messages.
+    """
+    posted_morning = False
+    posted_night = False
+    india_timezone = pytz.timezone('Asia/Kolkata')
+    
+    # Initialize random minutes for today
+    morning_minute = random.randint(0, 10)  # Between X:00 and X:10 AM
+    night_minute = random.randint(0, 10)    # Between Y:00 and Y:10 PM
+    
+    print(f"Auto-poster started. Morning target minute: {morning_minute}, Night target minute: {night_minute}")
+
+    while True:
+        now = datetime.now(india_timezone)
+        current_hour = now.hour # Use .hour for int, not strftime
+        current_minute = now.minute
+        
+        # Midnight Reset: Reset flags and generate new random minutes for the next day
+        if current_hour == 0 and current_minute == 0 and (posted_morning or posted_night):
+            print("Midnight reset. Resetting flags and generating new random minutes.")
+            posted_morning = False
+            posted_night = False
+            morning_minute = random.randint(0, 10)
+            night_minute = random.randint(0, 10)
+            print(f"New morning target minute: {morning_minute}, New night target minute: {night_minute}")
+        
+        # Good Morning Time (5:00-5:10 AM IST)
+        if current_hour == 5 and not posted_morning:
+            if current_minute >= morning_minute:
+                print(f"Time to send Good Morning! Current: {current_hour}:{current_minute}, Target: 5:{morning_minute}")
+                send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
+                posted_morning = True
+                print("Good Morning message sent and flag set.")
+        
+        # Good Night Time (10:00-10:10 PM IST)
+        if current_hour == 22 and not posted_night:
+            if current_minute >= night_minute:
+                print(f"Time to send Good Night! Current: {current_hour}:{current_minute}, Target: 22:{night_minute}")
+                send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
+                posted_night = True
+                print("Good Night message sent and flag set.")
+        
+        # Sleep for a duration before checking again
+        time.sleep(60) # Check every 60 seconds (1 minute)
 
 def keyword_found(text):
-    """टेक्स्ट में प्रमोशनल कीवर्ड्स को चेक करता है।"""
+    """
+    Checks if any defined keyword or URL pattern is present in the text.
+    """
     text = text.lower()
-    # गैर-अल्फ़ान्यूमेरिक वर्णों और कुछ विशेष वर्णों को हटा दें
+    # Remove punctuation except @ and / for channel names and commands
     text = re.sub(r'[^\w\s@/]', '', text) 
+    
     for kw in KEYWORDS:
-        # पूरे शब्द के मिलान के लिए regex का उपयोग करें
-        if re.search(r'\b' + re.escape(kw) + r'\b', text):
+        # Use word boundaries for most keywords to avoid partial matches (e.g., "join" not matching "joining")
+        # However, for some like 'https' or '@', direct substring match might be intended.
+        # Modified to handle specific keywords where partial match is OK (like 'join' within 'joining')
+        if kw in ["https", "@", "t.me", "bit.ly"]: # These are often part of URLs
+             if kw in text:
+                 return True
+        elif re.search(r'\b' + re.escape(kw) + r'\b', text): # For whole words
             return True
-        # कुछ विशेष कीवर्ड के लिए आंशिक मिलान की भी जाँच करें
-        if kw in ["refer", "join", "earn", "चैनल", "ज्वाइन"]:
+        # Specific check for Hindi words that might not always have clear word boundaries
+        if kw in ["चैनल", "ज्वाइन", "कमई", "पैसे", "फ़ॉलो"]:
             if kw in text:
                 return True
-    # लिंक्स के लिए भी जाँच करें
+
+    # Check for common URL patterns explicitly
     if re.search(r'(https?://\S+|t\.me/\S+|bit\.ly/\S+)', text):
         return True
     return False
 
+# --- Telegram Bot Message Handlers ---
+
+@bot.message_handler(commands=['start'])
+def start_handler(message):
+    """
+    Handles the /start command, sending a promotional message and image.
+    """
+    print(f"Received /start command from {message.chat.id}")
+    try:
+        bot.send_photo(message.chat.id, START_IMAGE_URL, caption=START_MESSAGE_TEXT, parse_mode='Markdown')
+        print(f"Sent /start message to {message.chat.id}")
+    except Exception as e:
+        print(f"Error in /start handler for chat ID {message.chat.id}: {e}")
+        bot.send_message(message.chat.id, f"Error receiving /start: {e}")
+
 @bot.message_handler(func=lambda msg: True)
 def promo_reply(message):
-    """किसी भी मैसेज को हैंडल करता है और यदि कीवर्ड पाए जाते हैं तो प्रमोशन मैसेज भेजता है।"""
+    """
+    Handles all incoming messages and replies with a promotion if keywords are found.
+    """
+    if not message.text:
+        return # Ignore messages without text (e.g., photos without caption)
+
+    print(f"Received message from {message.chat.id}: {message.text}")
     try:
-        if not message.text: # यदि मैसेज में टेक्स्ट नहीं है तो बाहर निकलें
-            return
-        
         if keyword_found(message.text):
-            # प्रमोशन मैसेज अब बोल्ड किया गया है
+            print(f"Keyword found in message from {message.chat.id}. Sending promo reply.")
             promo_caption = "*[[Boss >> हमारे चैनल को भी [[ Join ]] करें:]]*\n*[[ https://t.me/All_Gift_Code_Earning ]]*"
             
-            # बोल्ड प्रमोशन मैसेज को कैप्शन के रूप में इमेज के साथ भेजें
             bot.send_photo(
                 chat_id=message.chat.id,
                 photo="https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png",
                 caption=promo_caption,
                 parse_mode='Markdown',
-                reply_to_message_id=message.message_id # उपयोगकर्ता के मैसेज का जवाब दें
+                reply_to_message_id=message.message_id # Reply to the user's message
             )
-            print(f"Promotional reply sent to chat ID {message.chat.id} for message: {message.text[:50]}...")
+            print(f"Promo reply sent to {message.chat.id}.")
     except Exception as e:
-        print(f"Error in promo_reply for chat ID {message.chat.id}: {e}")
+        print(f"Error in promo_reply for message ID {message.message_id}: {e}")
+
+# --- Flask App Routes for Webhook ---
 
 @app.route('/', methods=['POST'])
 def webhook():
-    """टेलीग्राम वेबहुक अपडेट को हैंडल करता है।"""
+    """
+    Webhook endpoint to receive updates from Telegram.
+    """
     if request.headers.get('content-type') == 'application/json':
         json_string = request.get_data().decode('utf-8')
         update = telebot.types.Update.de_json(json_string)
         bot.process_new_updates([update])
         return 'OK', 200
     else:
-        # गलत content-type के लिए HTTP 403 भेजें
-        print(f"Webhook received non-JSON request: {request.headers.get('content-type')}")
-        return 'Forbidden', 403
-
+        return '<h1>Bad Request!</h1>', 403
 
 @app.route('/')
 def home():
-    """मुख्य URL के लिए एक साधारण होम पेज प्रदान करता है।"""
-    return "Bot is running."
+    """
+    Simple home page to confirm the Flask app is running.
+    """
+    return "Bot is running and listening for updates!"
+
+# --- Main Execution Block ---
 
 if __name__ == "__main__":
-    # ऑटो-पोस्टर को एक अलग थ्रेड में शुरू करें ताकि बॉट का मुख्य लूप बाधित न हो
+    # Start the auto-poster in a separate thread
     threading.Thread(target=auto_poster, daemon=True).start()
     print("Auto-poster thread started.")
 
-    # Render पर डिप्लॉयमेंट के लिए वेबहुक सेट करें, अन्यथा लोकल पोलिंग का उपयोग करें
-    if IS_RENDER:
-        if WEBHOOK_URL:
+    # Configure webhook for Render deployment or use long polling for local
+    if IS_RENDER == "true": # Render sets environment variables as strings
+        if BOT_TOKEN and WEBHOOK_URL:
             try:
                 bot.set_webhook(url=f"{WEBHOOK_URL}/")
                 print(f"Webhook set to: {WEBHOOK_URL}/")
+                # Run Flask app for webhook
                 app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
             except Exception as e:
-                print(f"Failed to set webhook: {e}")
+                print(f"Error setting webhook or starting Flask app: {e}")
                 print("Falling back to long polling.")
-                bot.infinity_polling() # वेबहुक सेट न हो पाए तो लॉन्ग पोलिंग पर वापस आएं
+                bot.infinity_polling() # Fallback
         else:
-            print("WEBHOOK_URL environment variable not set on Render. Webhook will not be set.")
-            print("Running with long polling (for Render deployment without webhook URL).")
+            print("Environment variables BOT_TOKEN or WEBHOOK_URL not set for Render. Using long polling.")
             bot.infinity_polling()
     else:
-        print("Running with long polling (for local development).")
+        print("Not running on Render (IS_RENDER not 'true'). Running with long polling (for local development).")
         bot.infinity_polling()
