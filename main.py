@@ -149,44 +149,50 @@ def auto_poster():
     """
     Thread function to periodically send Good Morning/Night messages.
     """
-    posted_morning = False
-    posted_night = False
+    posted_morning_today = False
+    posted_night_today = False
     india_timezone = pytz.timezone('Asia/Kolkata')
     
     # Initialize random minutes for today
     morning_minute = random.randint(0, 10)  # Between X:00 and X:10 AM
     night_minute = random.randint(0, 10)    # Between Y:00 and Y:10 PM
     
+    # Keep track of the last day the poster ran to reset flags reliably
+    last_run_day = datetime.now(india_timezone).day
+    
     print(f"Auto-poster started. Morning target minute: {morning_minute}, Night target minute: {night_minute}")
+    print(f"Initial last run day: {last_run_day}")
 
     while True:
         now = datetime.now(india_timezone)
-        current_hour = now.hour # Use .hour for int, not strftime
+        current_hour = now.hour
         current_minute = now.minute
-        
-        # Midnight Reset: Reset flags and generate new random minutes for the next day
-        if current_hour == 0 and current_minute == 0 and (posted_morning or posted_night):
-            print("Midnight reset. Resetting flags and generating new random minutes.")
-            posted_morning = False
-            posted_night = False
+        current_day = now.day # Get current day of the month
+
+        # Daily Reset: Check if the day has changed
+        if current_day != last_run_day:
+            print(f"Day changed from {last_run_day} to {current_day}. Resetting flags and generating new random minutes.")
+            posted_morning_today = False
+            posted_night_today = False
             morning_minute = random.randint(0, 10)
             night_minute = random.randint(0, 10)
+            last_run_day = current_day # Update last run day
             print(f"New morning target minute: {morning_minute}, New night target minute: {night_minute}")
         
         # Good Morning Time (5:00-5:10 AM IST)
-        if current_hour == 5 and not posted_morning:
+        if current_hour == 5 and not posted_morning_today:
             if current_minute >= morning_minute:
                 print(f"Time to send Good Morning! Current: {current_hour}:{current_minute}, Target: 5:{morning_minute}")
                 send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
-                posted_morning = True
+                posted_morning_today = True
                 print("Good Morning message sent and flag set.")
         
         # Good Night Time (10:00-10:10 PM IST)
-        if current_hour == 22 and not posted_night:
+        if current_hour == 22 and not posted_night_today:
             if current_minute >= night_minute:
                 print(f"Time to send Good Night! Current: {current_hour}:{current_minute}, Target: 22:{night_minute}")
                 send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
-                posted_night = True
+                posted_night_today = True
                 print("Good Night message sent and flag set.")
         
         # Sleep for a duration before checking again
@@ -306,3 +312,4 @@ if __name__ == "__main__":
     else:
         print("Not running on Render (IS_RENDER not 'true'). Running with long polling (for local development).")
         bot.infinity_polling()
+
