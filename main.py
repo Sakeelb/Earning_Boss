@@ -4,7 +4,7 @@ import threading
 import time
 from flask import Flask, request
 import pytz
-from datetime import datetime
+from datetime import datetime, timedelta # timedelta भी इंपोर्ट करें
 import re
 import random
 
@@ -109,7 +109,9 @@ def get_today_index(list_length):
     Calculates an index based on the current day of the year.
     This ensures a different message/image is used each day in a cycle.
     """
-    today = int(datetime.now().strftime("%j")) # Day of the year (1-366)
+    # Use IST for index calculation to align with message cycle
+    india_timezone = pytz.timezone('Asia/Kolkata')
+    today = int(datetime.now(india_timezone).strftime("%j")) # Day of the year (1-366)
     return today % list_length
 
 def send_message_auto(messages, images, prefix_emoji):
@@ -164,10 +166,19 @@ def auto_poster():
     print(f"Initial last run day: {last_run_day}")
 
     while True:
-        now = datetime.now(india_timezone)
+        # Get current time in UTC first (server's likely default)
+        utc_now = datetime.utcnow()
+        # Convert UTC time to IST
+        now = utc_now.replace(tzinfo=pytz.utc).astimezone(india_timezone)
+        
         current_hour = now.hour
         current_minute = now.minute
         current_day = now.day # Get current day of the month
+
+        # --- Debugging Logs Added Here ---
+        print(f"DEBUG: Current IST Time: {now.strftime('%Y-%m-%d %H:%M:%S')}, Hour: {current_hour}, Minute: {current_minute}, Day: {current_day}")
+        print(f"DEBUG: Flags: Morning={posted_morning_today}, Night={posted_night_today}")
+        # --- End Debugging Logs ---
 
         # Daily Reset: Check if the day has changed
         if current_day != last_run_day:
@@ -186,6 +197,8 @@ def auto_poster():
                 send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
                 posted_morning_today = True
                 print("Good Morning message sent and flag set.")
+            else: # Debugging line for when it's 5 AM but minute is not met
+                print(f"DEBUG: It's 5 AM but minute {current_minute} < target minute {morning_minute}. Waiting.")
         
         # Good Night Time (10:00-10:10 PM IST)
         if current_hour == 22 and not posted_night_today:
@@ -194,6 +207,8 @@ def auto_poster():
                 send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
                 posted_night_today = True
                 print("Good Night message sent and flag set.")
+            else: # Debugging line for when it's 10 PM but minute is not met
+                print(f"DEBUG: It's 10 PM but minute {current_minute} < target minute {night_minute}. Waiting.")
         
         # Sleep for a duration before checking again
         time.sleep(60) # Check every 60 seconds (1 minute)
@@ -312,4 +327,3 @@ if __name__ == "__main__":
     else:
         print("Not running on Render (IS_RENDER not 'true'). Running with long polling (for local development).")
         bot.infinity_polling()
-
