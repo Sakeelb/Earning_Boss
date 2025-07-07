@@ -7,21 +7,23 @@ import pytz
 from datetime import datetime, timedelta
 import re
 import random
-import traceback
+import traceback # traceback मॉड्यूल इंपोर्ट करें
 
 # Environment variables
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 
-# --- महत्वपूर्ण बदलाव यहां है ---
-# ऑटो-मैसेज (गुड मॉर्निंग/नाइट) इस चैनल ID पर जाएंगे।
-# आपको इसे अपने नए चैनल (https://t.me/+5bYqRYoNoPQyMDU1) की संख्यात्मक ID से बदलना होगा।
-# उदाहरण: PROMO_CHANNEL_ID = "-1001234567890"
-PROMO_CHANNEL_ID = "YOUR_NUMERIC_CHANNEL_ID_HERE" # <--- इसे बदलें!
+# ====================================================================================================
+# बॉस, यह सबसे महत्वपूर्ण लाइन है!
+# आपको अपने नए Telegram चैनल (https://t.me/+5bYqRYoNoPQyMDU1) की संख्यात्मक ID यहां डालनी होगी।
+# यह ID '-100' से शुरू होती है (उदाहरण: "-1001234567890")।
+# इसे प्राप्त करने के लिए, अपने चैनल में @getidsbot या @userinfobot को एडमिन के रूप में जोड़ें
+# और फिर चैनल में /get_chat_id या /info कमांड भेजें।
+PROMO_CHANNEL_ID = "https://t.me/+5bYqRYoNoPQyMDU1" # <--- इसे अपनी वास्तविक चैनल ID से बदलें!
+# ====================================================================================================
 
-# प्रमोशन मैसेज में उल्लेखित चैनल का यूजरनेम/लिंक
+# प्रमोशन मैसेज में उल्लेखित चैनल का यूजरनेम/लिंक (जैसा आप चाहते हैं)
 PROMOTION_CHANNEL_USERNAME = "@All_Gift_Code_Earning"
 PROMOTION_CHANNEL_LINK = "https://t.me/All_Gift_Code_Earning"
-# --- बदलाव का अंत ---
 
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 IS_RENDER = os.environ.get("RENDER")
@@ -85,7 +87,7 @@ UNIQUE_NIGHT_MESSAGES = [
     "*Good Night All Members!* कल ₹200 से शुरू होगा दिन।",
     "*Good Night All Members!* कल ₹550 तक कमाने का चांस है।",
     "*Good Night All Members!* कल ₹300 से ₹500 तक कमाई होगी।",
-    "*Good Night All Members!* कल सीधा ₹400 का फायदा मिलेगा।"
+    "*Good Night All Members!* कल सीधा ₹400 का फायदा मिलेगा。"
 ]
 
 # प्रमोशनल रिप्लाई के लिए कीवर्ड्स
