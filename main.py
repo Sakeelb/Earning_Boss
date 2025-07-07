@@ -4,7 +4,7 @@ import threading
 import time
 from flask import Flask, request
 import pytz
-from datetime import datetime, timedelta # timedelta भी इंपोर्ट करें
+from datetime import datetime, timedelta
 import re
 import random
 
@@ -166,52 +166,56 @@ def auto_poster():
     print(f"Initial last run day: {last_run_day}")
 
     while True:
-        # Get current time in UTC first (server's likely default)
-        utc_now = datetime.utcnow()
-        # Convert UTC time to IST
-        now = utc_now.replace(tzinfo=pytz.utc).astimezone(india_timezone)
-        
-        current_hour = now.hour
-        current_minute = now.minute
-        current_day = now.day # Get current day of the month
+        try: # Added try-except to catch errors in the loop
+            # Get current time in UTC first (server's likely default)
+            utc_now = datetime.utcnow()
+            # Convert UTC time to IST
+            now = utc_now.replace(tzinfo=pytz.utc).astimezone(india_timezone)
+            
+            current_hour = now.hour
+            current_minute = now.minute
+            current_day = now.day # Get current day of the month
 
-        # --- Debugging Logs Added Here ---
-        print(f"DEBUG: Current IST Time: {now.strftime('%Y-%m-%d %H:%M:%S')}, Hour: {current_hour}, Minute: {current_minute}, Day: {current_day}")
-        print(f"DEBUG: Flags: Morning={posted_morning_today}, Night={posted_night_today}")
-        # --- End Debugging Logs ---
+            # --- Debugging Logs Added Here ---
+            print(f"DEBUG: Current IST Time: {now.strftime('%Y-%m-%d %H:%M:%S')}, Hour: {current_hour}, Minute: {current_minute}, Day: {current_day}")
+            print(f"DEBUG: Flags: Morning={posted_morning_today}, Night={posted_night_today}")
+            # --- End Debugging Logs ---
 
-        # Daily Reset: Check if the day has changed
-        if current_day != last_run_day:
-            print(f"Day changed from {last_run_day} to {current_day}. Resetting flags and generating new random minutes.")
-            posted_morning_today = False
-            posted_night_today = False
-            morning_minute = random.randint(0, 10)
-            night_minute = random.randint(0, 10)
-            last_run_day = current_day # Update last run day
-            print(f"New morning target minute: {morning_minute}, New night target minute: {night_minute}")
-        
-        # Good Morning Time (5:00-5:10 AM IST)
-        if current_hour == 5 and not posted_morning_today:
-            if current_minute >= morning_minute:
-                print(f"Time to send Good Morning! Current: {current_hour}:{current_minute}, Target: 5:{morning_minute}")
-                send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
-                posted_morning_today = True
-                print("Good Morning message sent and flag set.")
-            else: # Debugging line for when it's 5 AM but minute is not met
-                print(f"DEBUG: It's 5 AM but minute {current_minute} < target minute {morning_minute}. Waiting.")
-        
-        # Good Night Time (10:00-10:10 PM IST)
-        if current_hour == 22 and not posted_night_today:
-            if current_minute >= night_minute:
-                print(f"Time to send Good Night! Current: {current_hour}:{current_minute}, Target: 22:{night_minute}")
-                send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
-                posted_night_today = True
-                print("Good Night message sent and flag set.")
-            else: # Debugging line for when it's 10 PM but minute is not met
-                print(f"DEBUG: It's 10 PM but minute {current_minute} < target minute {night_minute}. Waiting.")
-        
-        # Sleep for a duration before checking again
-        time.sleep(60) # Check every 60 seconds (1 minute)
+            # Daily Reset: Check if the day has changed
+            if current_day != last_run_day:
+                print(f"Day changed from {last_run_day} to {current_day}. Resetting flags and generating new random minutes.")
+                posted_morning_today = False
+                posted_night_today = False
+                morning_minute = random.randint(0, 10)
+                night_minute = random.randint(0, 10)
+                last_run_day = current_day # Update last run day
+                print(f"New morning target minute: {morning_minute}, New night target minute: {night_minute}")
+            
+            # Good Morning Time (5:00-5:10 AM IST)
+            if current_hour == 5 and not posted_morning_today:
+                if current_minute >= morning_minute:
+                    print(f"Time to send Good Morning! Current: {current_hour}:{current_minute}, Target: 5:{morning_minute}")
+                    send_message_auto(UNIQUE_MORNING_MESSAGES, MORNING_IMAGE_URLS, "☀️")
+                    posted_morning_today = True
+                    print("Good Morning message sent and flag set.")
+                else: # Debugging line for when it's 5 AM but minute is not met
+                    print(f"DEBUG: It's 5 AM but minute {current_minute} < target minute {morning_minute}. Waiting.")
+            
+            # Good Night Time (10:00-10:10 PM IST)
+            if current_hour == 22 and not posted_night_today:
+                if current_minute >= night_minute:
+                    print(f"Time to send Good Night! Current: {current_hour}:{current_minute}, Target: 22:{night_minute}")
+                    send_message_auto(UNIQUE_NIGHT_MESSAGES, NIGHT_IMAGE_URLS, "🌙")
+                    posted_night_today = True
+                    print("Good Night message sent and flag set.")
+                else: # Debugging line for when it's 10 PM but minute is not met
+                    print(f"DEBUG: It's 10 PM but minute {current_minute} < target minute {night_minute}. Waiting.")
+            
+            # Sleep for a duration before checking again
+            time.sleep(60) # Check every 60 seconds (1 minute)
+        except Exception as e:
+            print(f"ERROR: An unhandled exception occurred in auto_poster thread: {e}")
+            time.sleep(300) # Sleep for a longer duration (5 minutes) before retrying to prevent rapid crashing
 
 def keyword_found(text):
     """
@@ -327,3 +331,4 @@ if __name__ == "__main__":
     else:
         print("Not running on Render (IS_RENDER not 'true'). Running with long polling (for local development).")
         bot.infinity_polling()
+
