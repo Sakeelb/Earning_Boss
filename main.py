@@ -114,8 +114,7 @@ START_MESSAGE_TEXT = f"""
 *Isko paane ke liye hamare channel se juden:*
 *[[ {PROMOTION_CHANNEL_USERNAME} ]]*
 """
-START_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/IMG_20250605_144922.png"
-
+START_IMAGE_URL = "https://github.com/Sakeelb/Earning_Boss/blob/d5f1ad7c8139ff34e3048d565c7e8f0f071cee41/New/1781241774791.png"
 # --- सहायक फंक्शन्स (Helper Functions) ---
 
 def get_today_index(list_length):
