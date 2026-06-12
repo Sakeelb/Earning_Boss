@@ -4,7 +4,7 @@ import threading
 import time
 from flask import Flask, request
 import pytz
-from datetime import datetime
+from datetime import datetime, time as dt_time
 import re
 import random
 import traceback
@@ -22,7 +22,6 @@ else:
     print("WARNING: OWNER_ID not set. User messages will not be forwarded.")
 
 PROMO_CHANNEL_ID = "-1002437678122"          # channel for auto morning/night posts
-# ⭐ CHANGE 1: Button ab channel kholega, post nahi
 PROMOTION_CHANNEL_LINK = "https://t.me/Proper_Trending"   # direct channel link
 
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
@@ -31,14 +30,10 @@ IS_RENDER = os.environ.get("RENDER") == "true"
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# ========== Images ==========
+# ========== Images (your existing URLs) ==========
 PROMO_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
 START_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
 
-# ⚠️ Caption – bilkul neutral, non‑promotional
-PROMO_CAPTION = "यह जानकारी आपके काम की हो सकती है। एक बार देख लेना फायदेमंद रहेगा。"
-
-# ========== Good Morning / Good Night images ==========
 MORNING_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning.jpeg",
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning%201.jpeg",
@@ -65,7 +60,7 @@ NIGHT_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night%209.jpeg"
 ]
 
-# ========== Random profit templates ==========
+# ========== Random profit templates for auto‑posts (morning/night) ==========
 MORNING_TEMPLATES = [
     "*Good Morning!* आज ₹{amount} तक फायदेमंद रहेगा।",
     "*Good Morning!* कम से कम ₹{amount} का फायदा तय है आज।",
@@ -92,7 +87,21 @@ NIGHT_TEMPLATES = [
     "*Good Night All Members!* कल सीधा ₹{amount} का फायदा मिलेगा।"
 ]
 
-# ========== Keywords ==========
+# ========== Random attractive captions for promo (users will see) ==========
+PROMO_CAPTIONS = [
+    "🚀 Live New Loot! Fast Join Telegram Channel",
+    "💰 Exclusive Offer: Channel Join Karo aur Kamao",
+    "⚡ Limited Time: Naye Loot Codes Aaye Hain",
+    "🔥 Daily Bonus: Channel Join Karke Pao",
+    "📢 Urgent Update: Channel Join Karein Abhi",
+    "🎁 Free Gift Code: Channel Par Available",
+    "💸 बिना Investment कमाई शुरू करें, Join Now",
+    "🤫 Secret Offer: Sirf Channel Members Ke Liye",
+    "👑 VIP Loot: Channel Join Karo aur Claim Karo",
+    "🎯 Target Complete: Channel Join Karo, Mil Sakta Hai Reward"
+]
+
+# ========== Keywords list ==========
 KEYWORDS = [
     "subscribe", "chat", "reply", "join", "joining", "refer", "register", "earning",
     "https", "invite", "@", "channel", "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो",
@@ -106,14 +115,17 @@ KEYWORDS = [
     "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link", "/join"
 ]
 
-START_MESSAGE_TEXT = "नमस्ते! कुछ उपयोगी बातें आपके लिए हैं। नीचे दिए बटन पर क्लिक करके देख सकते हैं।"
-
 # ==================== Helper functions ====================
+def get_random_promo_caption():
+    """Return a random attractive caption from the list"""
+    return random.choice(PROMO_CAPTIONS)
+
 def get_today_index(list_length):
     india_tz = pytz.timezone('Asia/Kolkata')
     return int(datetime.now(india_tz).strftime("%j")) % list_length
 
-def send_message_auto(templates, images, prefix_emoji):
+def send_auto_post(templates, images, prefix_emoji):
+    """Send morning/night post to channel with random profit"""
     try:
         profit_amount = random.randint(100, 1000)
         idx = get_today_index(len(templates))
@@ -129,42 +141,69 @@ def send_message_auto(templates, images, prefix_emoji):
                     bot.set_message_reaction(PROMO_CHANNEL_ID, sent.message_id, reaction=[{'type': 'emoji', 'emoji': emoji}])
                 except:
                     pass
-        print(f"Auto message sent with profit ₹{profit_amount}")
+        print(f"Auto post sent with profit ₹{profit_amount}")
     except Exception as e:
-        print(f"Auto send error: {e}")
+        print(f"Auto post error: {e}")
+
+def get_minutes_from(base_hour, base_minute, current_hour, current_minute):
+    """Returns total minutes elapsed since base time (assuming same day or next day for midnight)"""
+    # Convert current time to minutes since midnight
+    curr_total = current_hour * 60 + current_minute
+    base_total = base_hour * 60 + base_minute
+    if curr_total >= base_total:
+        return curr_total - base_total
+    else:
+        # For cases like night post spanning midnight: base 23:30, current 00:15 -> 45 minutes
+        return (24*60 - base_total) + curr_total
 
 def auto_poster():
+    """Handle morning and night auto-posts with custom time windows"""
+    india_tz = pytz.timezone('Asia/Kolkata')
+    # Morning window: 4:30 to 5:00 -> target minutes from 4:00: between 30 and 60
+    morning_target = random.randint(30, 60)   # minutes from 4:00
+    # Night window: 23:30 to 00:00 -> target minutes from 23:00: between 30 and 60
+    night_target = random.randint(30, 60)    # minutes from 23:00
+    
     posted_morning = False
     posted_night = False
-    india_tz = pytz.timezone('Asia/Kolkata')
-    morning_min = random.randint(0, 10)
-    # ⭐ CHANGE 2: Night post now at 12 AM (hour 0) instead of 22 (10 PM)
-    night_min = random.randint(0, 10)
-    last_day = datetime.now(india_tz).day
-
+    last_day = None
+    
     while True:
         try:
             now = datetime.now(india_tz)
-            hour = now.hour
-            minute = now.minute
-            today = now.day
-
-            if today != last_day:
+            current_hour = now.hour
+            current_minute = now.minute
+            current_day = now.day
+            
+            # Reset flags at start of a new day (after midnight)
+            if last_day != current_day:
                 posted_morning = False
                 posted_night = False
-                morning_min = random.randint(0, 10)
-                night_min = random.randint(0, 10)
-                last_day = today
-
-            if hour == 5 and not posted_morning and minute >= morning_min:
-                send_message_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
-                posted_morning = True
-            # ⭐ Night post at midnight (hour 0)
-            if hour == 0 and not posted_night and minute >= night_min:
-                send_message_auto(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
-                posted_night = True
-
-            time.sleep(60)
+                # Generate new random targets for the new day
+                morning_target = random.randint(30, 60)
+                night_target = random.randint(30, 60)
+                last_day = current_day
+                print(f"New targets - morning: {morning_target} min after 4:00, night: {night_target} min after 23:00")
+            
+            # Morning post check (window 4:30 to 5:00)
+            if not posted_morning:
+                mins_from_4 = get_minutes_from(4, 0, current_hour, current_minute)
+                if 30 <= mins_from_4 <= morning_target and mins_from_4 >= morning_target:
+                    # Only post when we first reach or exceed target within the window
+                    send_auto_post(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
+                    posted_morning = True
+                    print("Morning auto-post sent")
+            
+            # Night post check (window 23:30 to 00:00)
+            if not posted_night:
+                mins_from_23 = get_minutes_from(23, 0, current_hour, current_minute)
+                # Window 30 to 60 minutes after 23:00 (23:30 to 00:00)
+                if 30 <= mins_from_23 <= night_target and mins_from_23 >= night_target:
+                    send_auto_post(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
+                    posted_night = True
+                    print("Night auto-post sent")
+            
+            time.sleep(30)  # check every 30 seconds for more precision
         except Exception as e:
             print(f"Auto-poster error: {e}")
             traceback.print_exc()
@@ -187,64 +226,49 @@ def keyword_found(text):
             return True
     return False
 
-# ========== Subtle promo sender (channel link button) ==========
-def send_subtle_info(chat_id):
+# ========== Promo sender ==========
+def send_promo(chat_id):
+    """Send random attractive caption + channel link button"""
     markup = InlineKeyboardMarkup()
-    # Button ab channel kholega
-    markup.add(InlineKeyboardButton("📄 जानकारी देखें", url=PROMOTION_CHANNEL_LINK))
+    markup.add(InlineKeyboardButton("🚀 Start Earning", url=PROMOTION_CHANNEL_LINK))
+    caption = get_random_promo_caption()
     try:
-        bot.send_photo(chat_id, PROMO_IMAGE_URL, caption=PROMO_CAPTION,
-                       parse_mode='Markdown', reply_markup=markup)
+        bot.send_photo(chat_id, PROMO_IMAGE_URL, caption=caption, parse_mode='Markdown', reply_markup=markup)
     except Exception as e:
-        print(f"Send subtle info error: {e}")
+        print(f"Send promo error: {e}")
 
-# ==================== Bot handlers ====================
+# ==================== Bot Handlers ====================
 @bot.message_handler(commands=['start'])
 def start_handler(message):
-    try:
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("📄 जानकारी देखें", url=PROMOTION_CHANNEL_LINK))
-        bot.send_photo(message.chat.id, START_IMAGE_URL, caption=START_MESSAGE_TEXT,
-                       parse_mode='Markdown', reply_markup=markup)
-    except Exception as e:
-        print(f"/start error: {e}")
+    send_promo(message.chat.id)
 
-@bot.callback_query_handler(func=lambda call: call.data == "send_promo")
-def handle_promo_button(call):
+@bot.callback_query_handler(func=lambda call: call.data == "send_promo")  # legacy, not used
+def handle_legacy(call):
     try:
         bot.answer_callback_query(call.id, text="✅", show_alert=False)
-        send_subtle_info(call.message.chat.id)
+        send_promo(call.message.chat.id)
     except Exception as e:
-        print(f"Callback error: {e}")
+        print(f"Legacy callback error: {e}")
 
 @bot.message_handler(func=lambda msg: True)
-def promo_reply(message):
-    if not message.text:
-        return
-    if keyword_found(message.text):
+def handle_all_messages(message):
+    # If keyword found, send promo reply
+    if message.text and keyword_found(message.text):
+        send_promo(message.chat.id)
+    
+    # Forward every user message to owner (including the keyword message)
+    if OWNER_ID and message.chat.id != OWNER_ID:
         try:
-            send_subtle_info(message.chat.id)
+            user = message.from_user
+            user_name = user.first_name or ""
+            if user.username:
+                user_name += f" (@{user.username})"
+            forward_text = f"📩 *नया मैसेज*\n👤 {user_name}\n🆔 `{user.id}`\n💬 {message.text}"
+            bot.send_message(OWNER_ID, forward_text, parse_mode='Markdown')
         except Exception as e:
-            print(f"Keyword reply error: {e}")
+            print(f"Forward error: {e}")
 
-# Forward all user messages to owner
-@bot.message_handler(func=lambda msg: True, priority=1)
-def forward_to_owner(message):
-    if not OWNER_ID:
-        return
-    if message.chat.id == OWNER_ID:
-        return
-    try:
-        user = message.from_user
-        user_name = user.first_name or ""
-        if user.username:
-            user_name += f" (@{user.username})"
-        forward_text = f"📩 *नया मैसेज*\n👤 {user_name}\n🆔 `{user.id}`\n💬 {message.text}"
-        bot.send_message(OWNER_ID, forward_text, parse_mode='Markdown')
-    except Exception as e:
-        print(f"Forward error: {e}")
-
-# ==================== Flask webhook ====================
+# ==================== Flask Webhook ====================
 @app.route('/', methods=['POST'])
 def webhook():
     if request.headers.get('content-type') == 'application/json':
@@ -255,7 +279,7 @@ def webhook():
 
 @app.route('/')
 def home():
-    return "Bot is running with channel link button and midnight night post."
+    return "Bot is running with custom timing and random promo captions."
 
 @app.route('/health')
 def health():
@@ -264,7 +288,7 @@ def health():
 # ==================== Main ====================
 if __name__ == "__main__":
     threading.Thread(target=auto_poster, daemon=True).start()
-    print("Auto-poster started (morning 5 AM, night 12 AM).")
+    print("Auto-poster started (morning 4:30-5:00, night 23:30-00:00).")
 
     if IS_RENDER and BOT_TOKEN and WEBHOOK_URL:
         try:
