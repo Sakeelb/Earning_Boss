@@ -1,10 +1,5 @@
 import os
 import telebot
-import threading
-import time
-import pytz
-from datetime import datetime
-import random
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -12,6 +7,13 @@ if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN not set!")
 
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# Webhook हटाओ (ताकि polling चल सके)
+try:
+    bot.delete_webhook()
+    print("✅ Webhook deleted successfully.")
+except Exception as e:
+    print(f"⚠️ Webhook delete error: {e}")
 
 # प्रोमोशन लिंक
 PROMO_LINK = "https://t.me/Proper_Trending"
@@ -25,12 +27,6 @@ def start_handler(msg):
                    caption="🔥 Live New Loot! Fast Join Telegram Channel",
                    reply_markup=markup)
 
-# Auto-poster thread (optional, हटा भी सकते हो अभी)
-def auto_poster():
-    # तुम्हारा auto-poster कोड यहाँ डालना, पर अभी काम नहीं करेगा क्योंकि चैनल ID नहीं डाली
-    pass
-
 if __name__ == "__main__":
-    # कोई webhook नहीं, सीधा polling
     print("Bot started in polling mode...")
     bot.infinity_polling()
