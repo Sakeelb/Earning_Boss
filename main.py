@@ -22,8 +22,8 @@ PROMO_CHANNEL_ID = "-1002437678122"
 # ====================================================================================================
 
 # प्रमोशन मैसेज में उल्लेखित चैनल का यूजरनेम/लिंक (जैसा आप चाहते हैं)
-PROMOTION_CHANNEL_USERNAME = "@All_Gift_Code_Earning"
-PROMOTION_CHANNEL_LINK = "https://t.me/All_Gift_Code_Earning"
+PROMOTION_CHANNEL_USERNAME = "@Proper_Trending"
+PROMOTION_CHANNEL_LINK = "https://t.me/Proper_Trending"
 
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 IS_RENDER = os.environ.get("RENDER")
@@ -114,7 +114,7 @@ START_MESSAGE_TEXT = f"""
 *Isko paane ke liye hamare channel se juden:*
 *[[ {PROMOTION_CHANNEL_USERNAME} ]]*
 """
-START_IMAGE_URL = "https://github.com/Sakeelb/Earning_Boss/blob/d5f1ad7c8139ff34e3048d565c7e8f0f071cee41/New/1781241774791.png"
+START_IMAGE_URL = "https://github.com/Sakeelb/Earning_Boss/blob/fd7a30f7826fe65abb99a0baeff70878fbc04815/New/1781241774791.png"
 # --- सहायक फंक्शन्स (Helper Functions) ---
 
 def get_today_index(list_length):
