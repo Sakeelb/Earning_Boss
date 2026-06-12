@@ -8,18 +8,18 @@ from datetime import datetime
 import re
 import random
 import traceback
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 
 # ==================== CONFIG ====================
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN not set!")
 
-PROMO_CHANNEL_ID = "-1002437678122"   # अपनी सही ID डालें
+PROMO_CHANNEL_ID = "-1002437678122"   # आपकी चैनल ID (जहाँ ऑटो-पोस्ट जाएगा)
 if not PROMO_CHANNEL_ID.startswith('-100'):
     raise ValueError("PROMO_CHANNEL_ID must start with '-100'")
 
-PROMOTION_CHANNEL_USERNAME = "@Proper_Trending"
+# ⭐ यही लिंक खुलेगा जब यूजर "Start Earning" बटन दबाएगा
 PROMOTION_CHANNEL_LINK = "https://t.me/Proper_Trending"
 
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
@@ -28,20 +28,7 @@ IS_RENDER = os.environ.get("RENDER") == "true"
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# ========== प्रमोशन बोर्ड (बटन के लिए) ==========
-# ⭐ आपकी दी हुई इमेज का लिंक - यही बटन दबाने पर भेजी जाएगी
-PROMO_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
-# स्टार्ट कमांड पर दिखने वाली इमेज (बटन से पहले) - आप चाहें तो यह भी वही रख सकते हैं
-START_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
-
-PROMO_CAPTION = f"""
-*🔥 आज का स्पेशल ऑफर 🔥*
-*✅ ₹300 तक का profit पक्का!*
-*✅ तुरंत जॉइन करें: {PROMOTION_CHANNEL_LINK}*
-*✅ कोई चार्ज नहीं, सीधा कमाई शुरू करें।*
-"""
-
-# ========== Good Morning / Good Night इमेज URLs (पहले जैसी) ==========
+# ========== इमेज URLs (गुड मॉर्निंग/नाइट के लिए) ==========
 MORNING_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning.jpeg",
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning%201.jpeg",
@@ -68,7 +55,7 @@ NIGHT_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night%209.jpeg"
 ]
 
-# ========== रैंडम प्रॉफिट (100-1000) के लिए मैसेज टेम्पलेट ==========
+# ========== रैंडम प्रॉफिट टेम्पलेट ==========
 MORNING_TEMPLATES = [
     "*Good Morning!* आज ₹{amount} तक फायदेमंद रहेगा।",
     "*Good Morning!* कम से कम ₹{amount} का फायदा तय है आज।",
@@ -95,7 +82,7 @@ NIGHT_TEMPLATES = [
     "*Good Night All Members!* कल सीधा ₹{amount} का फायदा मिलेगा।"
 ]
 
-# ========== कीवर्ड लिस्ट ==========
+# ========== बड़ी कीवर्ड लिस्ट ==========
 KEYWORDS = [
     "subscribe", "chat", "reply", "join", "joining", "refer", "register", "earning",
     "https", "invite", "@", "channel", "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो",
@@ -106,40 +93,48 @@ KEYWORDS = [
     "withdrawal proof", "payment proof", "real earning", "trusted earning", "instant payment",
     "upi earning", "paytm cash", "google pay offer", "crypto earning", "bitcoin earning",
     "ethereum earning", "online job", "work from home", "part time job", "full time job",
-    "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link", "/join"
+    "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link", "/join",
+    "लाल", "लोग", "भाई", "दोस्त", "कमाई", "लाभ", "मुनाफा", "धन", "पैसा", "इनाम",
+    "vip", "premium", "exclusive", "limited", "today only", "urgent", "flash sale",
+    "सुनो", "देखो", "करो", "अभी", "जल्दी", "मौका", "तुरंत", "फायदा", "प्रॉफिट", "गिफ्ट",
+    "कोड", "गुप्त", "सीक्रेट", "बंपर", "ऑफर", "डील", "लकी", "विनर", "कांटेस्ट",
+    "free money", "cash", "withdraw", "payment", "upi", "bank", "account", "wallet"
 ]
 
-START_MESSAGE_TEXT = f"""
-*Urgent Update:*
-*Naya Gift Code / Offer Live ho chuka hai.*
-*नीचे दिए बटन पर क्लिक करके प्रमोशन पाएं और ₹300 तक का profit कमाएं!*
-"""
+# ========== बटन हेल्पर ==========
+def get_start_earning_button():
+    """सीधे चैनल खोलने वाला इनलाइन बटन"""
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton("💰 Start Earning 💰", url=PROMOTION_CHANNEL_LINK))
+    return markup
 
-# ==================== HELPER FUNCTIONS ====================
+def get_persistent_keyboard():
+    """नीचे दिखने वाला मेनू कीबोर्ड"""
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False, row_width=2)
+    btn1 = KeyboardButton("🚀 Start Earning")
+    btn2 = KeyboardButton("💰 आज का प्रॉफिट")
+    btn3 = KeyboardButton("📢 चैनल लिंक")
+    btn4 = KeyboardButton("❓ Help")
+    markup.add(btn1, btn2, btn3, btn4)
+    return markup
+
+# ========== फंक्शन्स ==========
 def get_today_index(list_length):
     india_tz = pytz.timezone('Asia/Kolkata')
     return int(datetime.now(india_tz).strftime("%j")) % list_length
 
-def send_message_auto(templates, images, prefix_emoji):
-    """हर बार रैंडम अमाउंट (100-1000) जनरेट करके मैसेज बनाएगा"""
+def send_auto_message(templates, images, prefix_emoji):
     try:
-        profit_amount = random.randint(100, 1000)
+        profit = random.randint(100, 1000)
         idx = get_today_index(len(templates))
-        template = templates[idx]
-        msg = template.format(amount=profit_amount)
+        msg = templates[idx].format(amount=profit)
         img_idx = idx % len(images)
-        image_url = images[img_idx]
         caption = f"{prefix_emoji} {msg}"
-        sent = bot.send_photo(PROMO_CHANNEL_ID, image_url, caption=caption, parse_mode='Markdown')
-        if sent:
-            for emoji in ['👍', '❤️']:
-                try:
-                    bot.set_message_reaction(PROMO_CHANNEL_ID, sent.message_id, reaction=[{'type': 'emoji', 'emoji': emoji}])
-                except:
-                    pass
-        print(f"Auto message sent with profit ₹{profit_amount}")
+        bot.send_photo(PROMO_CHANNEL_ID, images[img_idx], caption=caption,
+                       parse_mode='Markdown', reply_markup=get_start_earning_button())
+        print(f"Auto-posted with ₹{profit}")
     except Exception as e:
-        print(f"Auto send error: {e}")
+        print(f"Auto-post error: {e}")
 
 def auto_poster():
     posted_morning = False
@@ -164,10 +159,10 @@ def auto_poster():
                 last_day = today
 
             if hour == 5 and not posted_morning and minute >= morning_min:
-                send_message_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
+                send_auto_message(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
                 posted_morning = True
             if hour == 22 and not posted_night and minute >= night_min:
-                send_message_auto(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
+                send_auto_message(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
                 posted_night = True
 
             time.sleep(60)
@@ -186,45 +181,55 @@ def keyword_found(text):
         if kw_low in ["https", "@", "t.me", "bit.ly"]:
             if kw_low in text:
                 return True
-        if kw_low in ["चैनल", "ज्वाइन", "कमई", "पैसे", "फ़ॉलो", "join", "chat", "/join"]:
+        if kw_low in ["चैनल", "ज्वाइन", "कमई", "पैसे", "फ़ॉलो", "join", "chat", "/join", "लाल", "लोग", "भाई", "दोस्त"]:
             if kw_low in text:
                 return True
         if re.search(r'\b' + re.escape(kw_low) + r'\b', text):
             return True
     return False
 
-# ==================== बॉट हैंडलर ====================
+# ========== हैंडलर ==========
 @bot.message_handler(commands=['start'])
 def start_handler(message):
     try:
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("🚀 Get Promotion / Start Earning", callback_data="send_promo"))
-        bot.send_photo(message.chat.id, START_IMAGE_URL, caption=START_MESSAGE_TEXT,
-                       parse_mode='Markdown', reply_markup=markup)
+        bot.send_message(message.chat.id,
+                         "*🎉 चैनल से जुड़ें और कमाई शुरू करें!*\n\n👇 नीचे बटन दबाएँ:",
+                         parse_mode='Markdown', reply_markup=get_start_earning_button())
+        # पर्सिस्टेंट कीबोर्ड दिखाएँ
+        bot.send_message(message.chat.id, "यह रहा आपका मेनू (हमेशा नीचे):",
+                         reply_markup=get_persistent_keyboard())
     except Exception as e:
         print(f"/start error: {e}")
 
-@bot.callback_query_handler(func=lambda call: call.data == "send_promo")
-def handle_promo_button(call):
-    try:
-        bot.send_photo(call.message.chat.id, PROMO_IMAGE_URL, caption=PROMO_CAPTION, parse_mode='Markdown')
-        bot.answer_callback_query(call.id, text="✅ Promotion sent! Check above.")
-    except Exception as e:
-        bot.answer_callback_query(call.id, text="Error, try again later.")
-        print(f"Promo button error: {e}")
+@bot.message_handler(func=lambda msg: msg.text == "🚀 Start Earning")
+def handle_start_earning_text(message):
+    bot.send_message(message.chat.id, "✅ नीचे दिए बटन पर क्लिक करके चैनल जॉइन करें:",
+                     reply_markup=get_start_earning_button())
+
+@bot.message_handler(func=lambda msg: msg.text == "💰 आज का प्रॉफिट")
+def handle_profit(message):
+    profit = random.randint(100, 1000)
+    bot.send_message(message.chat.id, f"🔥 आज का अनुमानित प्रॉफिट: *₹{profit} तक*\n\nचैनल जॉइन करें:",
+                     parse_mode='Markdown', reply_markup=get_start_earning_button())
+
+@bot.message_handler(func=lambda msg: msg.text == "📢 चैनल लिंक")
+def handle_channel_link(message):
+    bot.send_message(message.chat.id, f"📢 हमारा Telegram चैनल:\n{PROMOTION_CHANNEL_LINK}",
+                     reply_markup=get_start_earning_button())
+
+@bot.message_handler(func=lambda msg: msg.text == "❓ Help")
+def handle_help(message):
+    bot.send_message(message.chat.id, "किसी भी सहायता के लिए /start दबाएं और 'Start Earning' बटन पर क्लिक करें।",
+                     reply_markup=get_start_earning_button())
 
 @bot.message_handler(func=lambda msg: True)
 def promo_reply(message):
-    if not message.text:
-        return
-    if keyword_found(message.text):
-        try:
-            bot.send_photo(message.chat.id, PROMO_IMAGE_URL, caption=PROMO_CAPTION,
-                           parse_mode='Markdown', reply_to_message_id=message.message_id)
-        except Exception as e:
-            print(f"Keyword reply error: {e}")
+    if message.text and keyword_found(message.text):
+        bot.send_message(message.chat.id,
+                         "*🔑 आपने कीवर्ड टाइप किया! नीचे दिए बटन से चैनल जॉइन करें और कमाई शुरू करें:*",
+                         parse_mode='Markdown', reply_markup=get_start_earning_button())
 
-# ==================== फ्लास्क वेबहुक ====================
+# ========== फ्लास्क वेबहुक ==========
 @app.route('/', methods=['POST'])
 def webhook():
     if request.headers.get('content-type') == 'application/json':
@@ -235,30 +240,20 @@ def webhook():
 
 @app.route('/')
 def home():
-    return "Bot is running with RANDOM profit (100-1000) and your custom promo image!"
+    return "Bot is running with 'Start Earning' button that opens channel directly!"
 
 @app.route('/health')
 def health():
     return "OK", 200
 
-# ==================== मेन ====================
+# ========== मेन ==========
 if __name__ == "__main__":
     threading.Thread(target=auto_poster, daemon=True).start()
-    print("Auto-poster started (profit randomly 100-1000 each day).")
+    print("Auto-poster started.")
 
-    if IS_RENDER:
-        if BOT_TOKEN and WEBHOOK_URL:
-            try:
-                bot.remove_webhook()
-                bot.set_webhook(url=f"{WEBHOOK_URL}/")
-                print(f"Webhook set to {WEBHOOK_URL}/")
-                app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-            except Exception as e:
-                print(f"Webhook error: {e}. Fallback to polling.")
-                bot.infinity_polling()
-        else:
-            print("Missing BOT_TOKEN or WEBHOOK_URL. Using polling.")
-            bot.infinity_polling()
+    if IS_RENDER and BOT_TOKEN and WEBHOOK_URL:
+        bot.remove_webhook()
+        bot.set_webhook(url=f"{WEBHOOK_URL}/")
+        app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
     else:
-        print("Local mode: polling.")
         bot.infinity_polling()
