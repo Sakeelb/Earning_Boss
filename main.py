@@ -4,7 +4,7 @@ import threading
 import time
 from flask import Flask, request
 import pytz
-from datetime import datetime, time as dt_time
+from datetime import datetime
 import re
 import random
 import traceback
@@ -87,7 +87,8 @@ NIGHT_TEMPLATES = [
     "*Good Night All Members!* कल सीधा ₹{amount} का फायदा मिलेगा।"
 ]
 
-# ========== Random attractive captions for promo (users will see) ==========
+# ========== Random attractive captions for user‑facing messages ==========
+# Yeh woh captions hain jo user ko dikhenge – exciting, neutral, "promotion" ka ehsaas nahi
 PROMO_CAPTIONS = [
     "🚀 Live New Loot! Fast Join Telegram Channel",
     "💰 Exclusive Offer: Channel Join Karo aur Kamao",
@@ -145,24 +146,14 @@ def send_auto_post(templates, images, prefix_emoji):
     except Exception as e:
         print(f"Auto post error: {e}")
 
-def get_minutes_from(base_hour, base_minute, current_hour, current_minute):
-    """Returns total minutes elapsed since base time (assuming same day or next day for midnight)"""
-    # Convert current time to minutes since midnight
-    curr_total = current_hour * 60 + current_minute
-    base_total = base_hour * 60 + base_minute
-    if curr_total >= base_total:
-        return curr_total - base_total
-    else:
-        # For cases like night post spanning midnight: base 23:30, current 00:15 -> 45 minutes
-        return (24*60 - base_total) + curr_total
-
 def auto_poster():
-    """Handle morning and night auto-posts with custom time windows"""
+    """Handle morning (4:30-5:00) and night (23:30-00:00) auto-posts with random minutes"""
     india_tz = pytz.timezone('Asia/Kolkata')
-    # Morning window: 4:30 to 5:00 -> target minutes from 4:00: between 30 and 60
-    morning_target = random.randint(30, 60)   # minutes from 4:00
-    # Night window: 23:30 to 00:00 -> target minutes from 23:00: between 30 and 60
-    night_target = random.randint(30, 60)    # minutes from 23:00
+    
+    # Morning window: 4:30 to 5:00 -> target minutes from 4:00 between 30 and 60
+    morning_target = random.randint(30, 60)
+    # Night window: 23:30 to 00:00 -> target minutes from 23:00 between 30 and 60
+    night_target = random.randint(30, 60)
     
     posted_morning = False
     posted_night = False
@@ -175,35 +166,40 @@ def auto_poster():
             current_minute = now.minute
             current_day = now.day
             
-            # Reset flags at start of a new day (after midnight)
+            # Reset at day change
             if last_day != current_day:
                 posted_morning = False
                 posted_night = False
-                # Generate new random targets for the new day
                 morning_target = random.randint(30, 60)
                 night_target = random.randint(30, 60)
                 last_day = current_day
                 print(f"New targets - morning: {morning_target} min after 4:00, night: {night_target} min after 23:00")
             
-            # Morning post check (window 4:30 to 5:00)
+            # Morning post: between 4:30 and 5:00
             if not posted_morning:
-                mins_from_4 = get_minutes_from(4, 0, current_hour, current_minute)
-                if 30 <= mins_from_4 <= morning_target and mins_from_4 >= morning_target:
-                    # Only post when we first reach or exceed target within the window
-                    send_auto_post(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
-                    posted_morning = True
-                    print("Morning auto-post sent")
+                # Minutes since 4:00
+                if current_hour >= 4:
+                    mins_from_4 = (current_hour - 4) * 60 + current_minute
+                    if 30 <= mins_from_4 <= morning_target and mins_from_4 >= morning_target:
+                        send_auto_post(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
+                        posted_morning = True
+                        print("Morning auto-post sent")
             
-            # Night post check (window 23:30 to 00:00)
+            # Night post: between 23:30 and 00:00 (next day)
             if not posted_night:
-                mins_from_23 = get_minutes_from(23, 0, current_hour, current_minute)
-                # Window 30 to 60 minutes after 23:00 (23:30 to 00:00)
+                if current_hour == 23:
+                    mins_from_23 = current_minute
+                elif current_hour == 0:
+                    mins_from_23 = 60 + current_minute
+                else:
+                    mins_from_23 = -1
+                
                 if 30 <= mins_from_23 <= night_target and mins_from_23 >= night_target:
                     send_auto_post(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
                     posted_night = True
                     print("Night auto-post sent")
             
-            time.sleep(30)  # check every 30 seconds for more precision
+            time.sleep(30)
         except Exception as e:
             print(f"Auto-poster error: {e}")
             traceback.print_exc()
