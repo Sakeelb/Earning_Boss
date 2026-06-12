@@ -22,7 +22,8 @@ else:
     print("WARNING: OWNER_ID not set. User messages will not be forwarded.")
 
 PROMO_CHANNEL_ID = "-1002437678122"          # channel for auto morning/night posts
-PROMOTION_POST_LINK = "https://t.me/Proper_Trending/1098"   # your channel post link
+# ⭐ CHANGE 1: Button ab channel kholega, post nahi
+PROMOTION_CHANNEL_LINK = "https://t.me/Proper_Trending"   # direct channel link
 
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 IS_RENDER = os.environ.get("RENDER") == "true"
@@ -34,10 +35,10 @@ app = Flask(__name__)
 PROMO_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
 START_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
 
-# ⚠️ Caption – bilkul neutral, helpful, non‑promotional
-PROMO_CAPTION = "यह जानकारी आपके काम की हो सकती है। एक बार देख लेना फायदेमंद रहेगा।"
+# ⚠️ Caption – bilkul neutral, non‑promotional
+PROMO_CAPTION = "यह जानकारी आपके काम की हो सकती है। एक बार देख लेना फायदेमंद रहेगा。"
 
-# ========== Good Morning / Good Night images (auto-posts in your channel) ==========
+# ========== Good Morning / Good Night images ==========
 MORNING_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning.jpeg",
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning%201.jpeg",
@@ -64,7 +65,7 @@ NIGHT_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night%209.jpeg"
 ]
 
-# ========== Random profit templates (only for auto-posts in your channel) ==========
+# ========== Random profit templates ==========
 MORNING_TEMPLATES = [
     "*Good Morning!* आज ₹{amount} तक फायदेमंद रहेगा।",
     "*Good Morning!* कम से कम ₹{amount} का फायदा तय है आज।",
@@ -91,7 +92,7 @@ NIGHT_TEMPLATES = [
     "*Good Night All Members!* कल सीधा ₹{amount} का फायदा मिलेगा।"
 ]
 
-# ========== Keywords – these trigger the subtle promo ==========
+# ========== Keywords ==========
 KEYWORDS = [
     "subscribe", "chat", "reply", "join", "joining", "refer", "register", "earning",
     "https", "invite", "@", "channel", "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो",
@@ -105,7 +106,6 @@ KEYWORDS = [
     "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link", "/join"
 ]
 
-# /start message – extremely simple, no hint of promotion
 START_MESSAGE_TEXT = "नमस्ते! कुछ उपयोगी बातें आपके लिए हैं। नीचे दिए बटन पर क्लिक करके देख सकते हैं।"
 
 # ==================== Helper functions ====================
@@ -114,7 +114,6 @@ def get_today_index(list_length):
     return int(datetime.now(india_tz).strftime("%j")) % list_length
 
 def send_message_auto(templates, images, prefix_emoji):
-    """Auto‑post to your channel (morning/night) – user does not see this unless they are in your channel."""
     try:
         profit_amount = random.randint(100, 1000)
         idx = get_today_index(len(templates))
@@ -139,6 +138,7 @@ def auto_poster():
     posted_night = False
     india_tz = pytz.timezone('Asia/Kolkata')
     morning_min = random.randint(0, 10)
+    # ⭐ CHANGE 2: Night post now at 12 AM (hour 0) instead of 22 (10 PM)
     night_min = random.randint(0, 10)
     last_day = datetime.now(india_tz).day
 
@@ -159,7 +159,8 @@ def auto_poster():
             if hour == 5 and not posted_morning and minute >= morning_min:
                 send_message_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
                 posted_morning = True
-            if hour == 22 and not posted_night and minute >= night_min:
+            # ⭐ Night post at midnight (hour 0)
+            if hour == 0 and not posted_night and minute >= night_min:
                 send_message_auto(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
                 posted_night = True
 
@@ -186,12 +187,11 @@ def keyword_found(text):
             return True
     return False
 
-# ========== Ultra subtle promo sender ==========
+# ========== Subtle promo sender (channel link button) ==========
 def send_subtle_info(chat_id):
-    """User ko lagega ki yeh general helpful information hai, promotion nahi."""
     markup = InlineKeyboardMarkup()
-    # Button text bilkul neutral – "जानकारी देखें" / "विस्तार से पढ़ें"
-    markup.add(InlineKeyboardButton("📄 विस्तार से पढ़ें", url=PROMOTION_POST_LINK))
+    # Button ab channel kholega
+    markup.add(InlineKeyboardButton("📄 जानकारी देखें", url=PROMOTION_CHANNEL_LINK))
     try:
         bot.send_photo(chat_id, PROMO_IMAGE_URL, caption=PROMO_CAPTION,
                        parse_mode='Markdown', reply_markup=markup)
@@ -203,13 +203,12 @@ def send_subtle_info(chat_id):
 def start_handler(message):
     try:
         markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton("📄 जानकारी देखें", url=PROMOTION_POST_LINK))
+        markup.add(InlineKeyboardButton("📄 जानकारी देखें", url=PROMOTION_CHANNEL_LINK))
         bot.send_photo(message.chat.id, START_IMAGE_URL, caption=START_MESSAGE_TEXT,
                        parse_mode='Markdown', reply_markup=markup)
     except Exception as e:
         print(f"/start error: {e}")
 
-# Legacy callback handler (if any old button remains)
 @bot.callback_query_handler(func=lambda call: call.data == "send_promo")
 def handle_promo_button(call):
     try:
@@ -218,7 +217,6 @@ def handle_promo_button(call):
     except Exception as e:
         print(f"Callback error: {e}")
 
-# Keyword reply – same subtle info
 @bot.message_handler(func=lambda msg: True)
 def promo_reply(message):
     if not message.text:
@@ -229,7 +227,7 @@ def promo_reply(message):
         except Exception as e:
             print(f"Keyword reply error: {e}")
 
-# Forward all user messages to owner (so you can talk to them)
+# Forward all user messages to owner
 @bot.message_handler(func=lambda msg: True, priority=1)
 def forward_to_owner(message):
     if not OWNER_ID:
@@ -257,7 +255,7 @@ def webhook():
 
 @app.route('/')
 def home():
-    return "Bot is running with ultra‑subtle promotion (user does not realise)."
+    return "Bot is running with channel link button and midnight night post."
 
 @app.route('/health')
 def health():
@@ -266,7 +264,7 @@ def health():
 # ==================== Main ====================
 if __name__ == "__main__":
     threading.Thread(target=auto_poster, daemon=True).start()
-    print("Auto-poster started.")
+    print("Auto-poster started (morning 5 AM, night 12 AM).")
 
     if IS_RENDER and BOT_TOKEN and WEBHOOK_URL:
         try:
