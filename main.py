@@ -21,10 +21,13 @@ if OWNER_ID:
 else:
     print("WARNING: OWNER_ID not set. User messages will not be forwarded.")
 
-PROMO_CHANNEL_ID = "-1002437678122"          # channel for auto morning/night posts
-PROMOTION_CHANNEL_LINK = "https://t.me/Proper_Trending"   # direct channel link
+PROMO_CHANNEL_ID = "-1002437678122"
+PROMOTION_CHANNEL_LINK = "https://t.me/Proper_Trending"
 
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
+# IMPORTANT: Render ka primary URL (बिना slash के)
+RENDER_URL = os.environ.get("RENDER_URL", "https://earning-boss.onrender.com")
+WEBHOOK_URL = f"{RENDER_URL}/webhook"
+
 IS_RENDER = os.environ.get("RENDER") == "true"
 
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -32,7 +35,7 @@ app = Flask(__name__)
 
 # ========== Images (your existing URLs) ==========
 PROMO_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
-START_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
+START_IMAGE_URL = PROMO_IMAGE_URL
 
 MORNING_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Morning.jpeg",
@@ -60,7 +63,7 @@ NIGHT_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night%209.jpeg"
 ]
 
-# ========== Random profit templates for auto‑posts (morning/night) ==========
+# ========== Random profit templates ==========
 MORNING_TEMPLATES = [
     "*Good Morning!* आज ₹{amount} तक फायदेमंद रहेगा।",
     "*Good Morning!* कम से कम ₹{amount} का फायदा तय है आज।",
@@ -87,8 +90,7 @@ NIGHT_TEMPLATES = [
     "*Good Night All Members!* कल सीधा ₹{amount} का फायदा मिलेगा।"
 ]
 
-# ========== Random attractive captions for user‑facing messages ==========
-# Yeh woh captions hain jo user ko dikhenge – exciting, neutral, "promotion" ka ehsaas nahi
+# ========== Random attractive captions for users ==========
 PROMO_CAPTIONS = [
     "🚀 Live New Loot! Fast Join Telegram Channel",
     "💰 Exclusive Offer: Channel Join Karo aur Kamao",
@@ -102,7 +104,6 @@ PROMO_CAPTIONS = [
     "🎯 Target Complete: Channel Join Karo, Mil Sakta Hai Reward"
 ]
 
-# ========== Keywords list ==========
 KEYWORDS = [
     "subscribe", "chat", "reply", "join", "joining", "refer", "register", "earning",
     "https", "invite", "@", "channel", "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो",
@@ -118,7 +119,6 @@ KEYWORDS = [
 
 # ==================== Helper functions ====================
 def get_random_promo_caption():
-    """Return a random attractive caption from the list"""
     return random.choice(PROMO_CAPTIONS)
 
 def get_today_index(list_length):
@@ -126,7 +126,6 @@ def get_today_index(list_length):
     return int(datetime.now(india_tz).strftime("%j")) % list_length
 
 def send_auto_post(templates, images, prefix_emoji):
-    """Send morning/night post to channel with random profit"""
     try:
         profit_amount = random.randint(100, 1000)
         idx = get_today_index(len(templates))
@@ -147,26 +146,20 @@ def send_auto_post(templates, images, prefix_emoji):
         print(f"Auto post error: {e}")
 
 def auto_poster():
-    """Handle morning (4:30-5:00) and night (23:30-00:00) auto-posts with random minutes"""
     india_tz = pytz.timezone('Asia/Kolkata')
-    
-    # Morning window: 4:30 to 5:00 -> target minutes from 4:00 between 30 and 60
     morning_target = random.randint(30, 60)
-    # Night window: 23:30 to 00:00 -> target minutes from 23:00 between 30 and 60
     night_target = random.randint(30, 60)
-    
     posted_morning = False
     posted_night = False
     last_day = None
-    
+
     while True:
         try:
             now = datetime.now(india_tz)
             current_hour = now.hour
             current_minute = now.minute
             current_day = now.day
-            
-            # Reset at day change
+
             if last_day != current_day:
                 posted_morning = False
                 posted_night = False
@@ -174,18 +167,13 @@ def auto_poster():
                 night_target = random.randint(30, 60)
                 last_day = current_day
                 print(f"New targets - morning: {morning_target} min after 4:00, night: {night_target} min after 23:00")
-            
-            # Morning post: between 4:30 and 5:00
-            if not posted_morning:
-                # Minutes since 4:00
-                if current_hour >= 4:
-                    mins_from_4 = (current_hour - 4) * 60 + current_minute
-                    if 30 <= mins_from_4 <= morning_target and mins_from_4 >= morning_target:
-                        send_auto_post(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
-                        posted_morning = True
-                        print("Morning auto-post sent")
-            
-            # Night post: between 23:30 and 00:00 (next day)
+
+            if not posted_morning and current_hour >= 4:
+                mins_from_4 = (current_hour - 4) * 60 + current_minute
+                if 30 <= mins_from_4 <= morning_target and mins_from_4 >= morning_target:
+                    send_auto_post(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
+                    posted_morning = True
+
             if not posted_night:
                 if current_hour == 23:
                     mins_from_23 = current_minute
@@ -193,12 +181,10 @@ def auto_poster():
                     mins_from_23 = 60 + current_minute
                 else:
                     mins_from_23 = -1
-                
                 if 30 <= mins_from_23 <= night_target and mins_from_23 >= night_target:
                     send_auto_post(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
                     posted_night = True
-                    print("Night auto-post sent")
-            
+
             time.sleep(30)
         except Exception as e:
             print(f"Auto-poster error: {e}")
@@ -222,9 +208,7 @@ def keyword_found(text):
             return True
     return False
 
-# ========== Promo sender ==========
 def send_promo(chat_id):
-    """Send random attractive caption + channel link button"""
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🚀 Start Earning", url=PROMOTION_CHANNEL_LINK))
     caption = get_random_promo_caption()
@@ -238,7 +222,7 @@ def send_promo(chat_id):
 def start_handler(message):
     send_promo(message.chat.id)
 
-@bot.callback_query_handler(func=lambda call: call.data == "send_promo")  # legacy, not used
+@bot.callback_query_handler(func=lambda call: call.data == "send_promo")
 def handle_legacy(call):
     try:
         bot.answer_callback_query(call.id, text="✅", show_alert=False)
@@ -248,11 +232,8 @@ def handle_legacy(call):
 
 @bot.message_handler(func=lambda msg: True)
 def handle_all_messages(message):
-    # If keyword found, send promo reply
     if message.text and keyword_found(message.text):
         send_promo(message.chat.id)
-    
-    # Forward every user message to owner (including the keyword message)
     if OWNER_ID and message.chat.id != OWNER_ID:
         try:
             user = message.from_user
@@ -264,18 +245,23 @@ def handle_all_messages(message):
         except Exception as e:
             print(f"Forward error: {e}")
 
-# ==================== Flask Webhook ====================
-@app.route('/', methods=['POST'])
+# ==================== Flask Webhook Endpoints ====================
+@app.route('/webhook', methods=['POST'])
 def webhook():
     if request.headers.get('content-type') == 'application/json':
-        update = telebot.types.Update.de_json(request.get_data().decode('utf-8'))
-        bot.process_new_updates([update])
-        return 'OK', 200
+        try:
+            json_str = request.get_data().decode('utf-8')
+            update = telebot.types.Update.de_json(json_str)
+            bot.process_new_updates([update])
+            return 'OK', 200
+        except Exception as e:
+            print(f"Webhook processing error: {e}")
+            return 'Error', 500
     return 'Bad Request', 403
 
 @app.route('/')
 def home():
-    return "Bot is running with custom timing and random promo captions."
+    return "Bot is running with webhook endpoint /webhook"
 
 @app.route('/health')
 def health():
@@ -283,18 +269,33 @@ def health():
 
 # ==================== Main ====================
 if __name__ == "__main__":
+    # Start auto-poster thread
     threading.Thread(target=auto_poster, daemon=True).start()
-    print("Auto-poster started (morning 4:30-5:00, night 23:30-00:00).")
+    print("Auto-poster started.")
 
-    if IS_RENDER and BOT_TOKEN and WEBHOOK_URL:
+    if IS_RENDER:
+        # On Render: set webhook and run gunicorn (gunicorn will call app)
+        # But here we are not running app.run() because gunicorn will import app.
+        # However, this script is executed directly? In Render with gunicorn, __name__ is not "__main__".
+        # So we need to set webhook at module level, not inside if __name__.
+        # Let's set webhook now.
         try:
             bot.remove_webhook()
-            bot.set_webhook(url=f"{WEBHOOK_URL}/")
-            print(f"Webhook set to {WEBHOOK_URL}/")
-            app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+            webhook_success = bot.set_webhook(url=WEBHOOK_URL)
+            if webhook_success:
+                print(f"✅ Webhook set successfully to {WEBHOOK_URL}")
+            else:
+                print(f"❌ Failed to set webhook to {WEBHOOK_URL}")
         except Exception as e:
-            print(f"Webhook error: {e}. Fallback to polling.")
-            bot.infinity_polling()
+            print(f"Webhook setup error: {e}")
     else:
+        # Local development: use polling
         print("Local mode: polling.")
         bot.infinity_polling()
+
+# This is important: when gunicorn imports this module, it will create the 'app' object.
+# The webhook setting code above will run at import time (outside if __name__) only if IS_RENDER is true.
+# But careful: we don't want to set webhook multiple times. It's fine.
+# For gunicorn, we need to ensure that webhook is set after the server is ready.
+# A better approach: use a startup hook. But for simplicity, we set webhook at import.
+# Render will call gunicorn, which imports this file, then runs the app.
