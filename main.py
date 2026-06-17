@@ -14,12 +14,11 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN not set!")
 
-# OWNER_ID ko global level par hi strong handle kiya hai
 try:
     OWNER_ID = int(os.environ.get("OWNER_ID"))
 except (TypeError, ValueError):
     OWNER_ID = 0
-    print("WARNING: OWNER_ID not set or invalid numeric ID. Forwarding will not work.")
+    print("WARNING: OWNER_ID not set or invalid numeric ID.")
 
 PROMO_CHANNEL_ID = "-1002437678122"          # आपके चैनल की ID
 PROMO_CHANNEL_LINK = "https://t.me/Proper_Trending"   # चैनल लिंक
@@ -82,7 +81,7 @@ NIGHT_TEMPLATES = [
     "*Good Night All Members!* कल ₹{amount} का फायदा पक्का है।",
     "*Good Night All Members!* कल ₹{amount} तक कमाने का मौका है।",
     "*Good Night All Members!* कल ₹{amount} से शुरू होगा दिन।",
-    "*Good Night All Members!* कल ₹{amount} तक कमाने का चांस है।",
+    "*Good Night All Members!* कल ₹{amount} तक कमाने का चांस hai।",
     "*Good Night All Members!* कल ₹{amount} तक कमाई होगी।",
     "*Good Night All Members!* कल सीधा ₹{amount} का फायदा मिलेगा।"
 ]
@@ -135,7 +134,6 @@ def send_channel_auto(templates, images, prefix_emoji):
                     bot.set_message_reaction(PROMO_CHANNEL_ID, sent.message_id, reaction=[{'type': 'emoji', 'emoji': emoji}])
                 except:
                     pass
-        print(f"Auto-post sent with profit ₹{profit}")
     except Exception as e:
         print(f"Auto-post error: {e}")
 
@@ -180,7 +178,6 @@ def auto_poster():
 
             time.sleep(30)
         except Exception as e:
-            print(f"Auto-poster error: {e}")
             time.sleep(300)
 
 def keyword_found(text):
@@ -216,11 +213,11 @@ def start_handler(msg):
 
 @bot.message_handler(func=lambda m: True)
 def handle_all_messages(msg):
-    # Owner khud msg kare toh skip karein
+    # Owner agar khud message karega toh process yahin ruk jayega (No loop)
     if OWNER_ID != 0 and msg.chat.id == OWNER_ID:
         return
 
-    # [FIXED LOGIC]: Sabse pehle message hamesha forward hoga
+    # [SIMPLE FIXED FORWARDING]: Har user ka message hamesha owner ko forward hoga
     if OWNER_ID != 0:
         try:
             user = msg.from_user
@@ -232,15 +229,14 @@ def handle_all_messages(msg):
             forward_text = f"📩 *नया मैसेज*\n👤 {name}\n🆔 `{user.id}`\n💬 {text_content}"
             
             bot.send_message(OWNER_ID, forward_text, parse_mode='Markdown')
-            print(f"Message from {user.id} successfully forwarded to owner.")
         except Exception as e:
-            print(f"Forwarding failed in code: {e}")
+            print(f"Forwarding failed: {e}")
 
-    # Baad mein check hoga promo bhejna hai ya nahi
+    # Forwarding ke baad keyword check karke promo bhejega
     if msg.text and keyword_found(msg.text):
         send_promo(msg.chat.id)
 
-# ========== फ्लास्क रनर (Render /health endpoint) ==========
+# ========== फ्लास्क रनर (Render /health) ==========
 def run_flask():
     flask_app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
@@ -251,9 +247,8 @@ if __name__ == "__main__":
     except:
         pass
 
-    # threads execution
     threading.Thread(target=auto_poster, daemon=True).start()
     threading.Thread(target=run_flask, daemon=True).start()
 
-    print("Bot is successfully running on Polling...")
+    print("Bot is running with standard python main.py setup...")
     bot.infinity_polling()
