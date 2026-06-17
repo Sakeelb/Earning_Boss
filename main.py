@@ -14,25 +14,24 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN not set!")
 
-OWNER_ID = os.environ.get("OWNER_ID")
-if OWNER_ID:
-    OWNER_ID = int(OWNER_ID)
-else:
-    print("WARNING: OWNER_ID not set. User messages will not be forwarded.")
+# OWNER_ID ko global level par hi strong handle kiya hai
+try:
+    OWNER_ID = int(os.environ.get("OWNER_ID"))
+except (TypeError, ValueError):
+    OWNER_ID = 0
+    print("WARNING: OWNER_ID not set or invalid numeric ID. Forwarding will not work.")
 
 PROMO_CHANNEL_ID = "-1002437678122"          # आपके चैनल की ID
 PROMO_CHANNEL_LINK = "https://t.me/Proper_Trending"   # चैनल लिंक
 
 bot = telebot.TeleBot(BOT_TOKEN)
-
-# Flask app for health check (Render monitoring)
 flask_app = Flask(__name__)
 
 @flask_app.route('/health')
 def health():
     return "OK", 200
 
-# ========== इमेज URLs (आपकी दी हुई) ==========
+# ========== इमेज URLs ==========
 PROMO_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
 
 MORNING_IMAGE_URLS = [
@@ -61,7 +60,7 @@ NIGHT_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night%209.jpeg"
 ]
 
-# ========== रैंडम प्रॉफिट के लिए टेम्पलेट ==========
+# ========== रैंडम प्रॉफिट टेम्पलेट ==========
 MORNING_TEMPLATES = [
     "*Good Morning!* आज ₹{amount} तक फायदेमंद रहेगा।",
     "*Good Morning!* कम से कम ₹{amount} का फायदा तय है आज।",
@@ -88,7 +87,7 @@ NIGHT_TEMPLATES = [
     "*Good Night All Members!* कल सीधा ₹{amount} का फायदा मिलेगा।"
 ]
 
-# ========== यूज़र को दिखने वाले रैंडम कैप्शन (प्रमोशन वाले) ==========
+# ========== रैंडम कैप्शन ==========
 PROMO_CAPTIONS = [
     "🚀 Live New Loot! Fast Join Telegram Channel",
     "💰 Exclusive Offer: Channel Join Karo aur Kamao",
@@ -122,7 +121,6 @@ def get_today_index(length):
     return int(datetime.now(india_tz).strftime("%j")) % length
 
 def send_channel_auto(templates, images, prefix_emoji):
-    """चैनल में ऑटो-पोस्ट भेजना – सुबह या रात"""
     try:
         profit = random.randint(100, 1000)
         idx = get_today_index(len(templates))
@@ -142,10 +140,9 @@ def send_channel_auto(templates, images, prefix_emoji):
         print(f"Auto-post error: {e}")
 
 def auto_poster():
-    """बैकग्राउंड थ्रेड – मॉर्निंग (4:30-5:00) und नाइट (23:30-00:00) के लिए"""
     india_tz = pytz.timezone('Asia/Kolkata')
-    morning_target = random.randint(30, 60)   # 4:30 से 5:00 के बीच मिनट
-    night_target = random.randint(30, 60)     # 23:30 से 00:00 के बीच
+    morning_target = random.randint(30, 60)
+    night_target = random.randint(30, 60)
     posted_morning = False
     posted_night = False
     last_day = None
@@ -163,16 +160,13 @@ def auto_poster():
                 morning_target = random.randint(30, 60)
                 night_target = random.randint(30, 60)
                 last_day = day
-                print(f"New targets: morning {morning_target} min after 4:00, night {night_target} min after 23:00")
 
-            # Morning (4:30-5:00)
             if not posted_morning and hour >= 4:
                 mins_from_4 = (hour - 4) * 60 + minute
                 if 30 <= mins_from_4 <= morning_target and mins_from_4 >= morning_target:
                     send_channel_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
                     posted_morning = True
 
-            # Night (23:30-00:00)
             if not posted_night:
                 if hour == 23:
                     mins_from_23 = minute
@@ -207,7 +201,6 @@ def keyword_found(text):
     return False
 
 def send_promo(chat_id):
-    """यूज़र को प्रमोशनल फोटो + रैंडम कैप्शन + चैनल बटन भेजना"""
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🚀 Start Earning", url=PROMO_CHANNEL_LINK))
     caption = random.choice(PROMO_CAPTIONS)
@@ -223,47 +216,44 @@ def start_handler(msg):
 
 @bot.message_handler(func=lambda m: True)
 def handle_all_messages(msg):
-    # OWNER को खुद का मैसेज फॉरवर्ड होने से बचाएं
-    if OWNER_ID and msg.chat.id == OWNER_ID:
+    # Owner khud msg kare toh skip karein
+    if OWNER_ID != 0 and msg.chat.id == OWNER_ID:
         return
 
-    # [FIX]: सबसे पहले सभी यूज़र मैसेज (chahe kuch bhi type kare) OWNER_ID पर फॉरवर्ड करो
-    if OWNER_ID:
+    # [FIXED LOGIC]: Sabse pehle message hamesha forward hoga
+    if OWNER_ID != 0:
         try:
             user = msg.from_user
-            name = user.first_name or "No Name"
+            name = f"{user.first_name} {user.last_name or ''}".strip()
             if user.username:
                 name += f" (@{user.username})"
-            forward_text = f"📩 *नया मैसेज*\n👤 {name}\n🆔 `{user.id}`\n💬 {msg.text if msg.text else '[Non-text message]'}"
+            
+            text_content = msg.text if msg.text else "[Non-text message]"
+            forward_text = f"📩 *नया मैसेज*\n👤 {name}\n🆔 `{user.id}`\n💬 {text_content}"
+            
             bot.send_message(OWNER_ID, forward_text, parse_mode='Markdown')
+            print(f"Message from {user.id} successfully forwarded to owner.")
         except Exception as e:
-            print(f"Forward error: {e}")
+            print(f"Forwarding failed in code: {e}")
 
-    # [FIX]: फॉरवर्ड करने के बाद चेक करो, अगर कीवर्ड मिले तो प्रोमो भेजो
+    # Baad mein check hoga promo bhejna hai ya nahi
     if msg.text and keyword_found(msg.text):
         send_promo(msg.chat.id)
 
-# ========== फ्लास्क थ्रेड (हेल्थ चेक के लिए) ==========
+# ========== फ्लास्क रनर (Render /health endpoint) ==========
 def run_flask():
     flask_app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
-# ========== मेन ==========
+# ========== मेन रनर ==========
 if __name__ == "__main__":
-    # पहले से कोई वेबहुक हो तो हटाओ
     try:
         bot.delete_webhook()
-        print("Webhook deleted (if any).")
     except:
         pass
 
-    # ऑटो-पोस्टर थ्रेड शुरू करो
+    # threads execution
     threading.Thread(target=auto_poster, daemon=True).start()
-    print("Auto-poster started (morning 4:30-5:00, night 23:30-00:00).")
-
-    # हेल्थ चेक के लिए फ्लास्क थ्रेड (Render /health endpoint)
     threading.Thread(target=run_flask, daemon=True).start()
-    print("Flask health server started on port 5000/10000.")
 
-    # पोलिंग शुरू करो – यह मुख्य थ्रेड को ब्लॉक करेगा
-    print("Bot started in polling mode...")
+    print("Bot is successfully running on Polling...")
     bot.infinity_polling()
