@@ -5,11 +5,11 @@ import time
 import random
 import re
 from datetime import datetime
-from flask import Flask, request
+from flask import Flask
 import pytz
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# ========== CONFIG FROM ENVIRONMENT ==========
+# ========== CONFIG ==========
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN not set!")
@@ -20,15 +20,19 @@ if OWNER_ID:
 else:
     print("WARNING: OWNER_ID not set. User messages will not be forwarded.")
 
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL") # Render App URL (e.g., https://your-app.onrender.com)
-
 PROMO_CHANNEL_ID = "-1002437678122"          # आपके चैनल की ID
 PROMO_CHANNEL_LINK = "https://t.me/Proper_Trending"   # चैनल लिंक
 
 bot = telebot.TeleBot(BOT_TOKEN)
+
+# Flask app for health check (Render monitoring)
 flask_app = Flask(__name__)
 
-# ========== IMAGES & TEMPLATES (UNCHANGED) ==========
+@flask_app.route('/health')
+def health():
+    return "OK", 200
+
+# ========== इमेज URLs (आपकी दी हुई) ==========
 PROMO_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
 
 MORNING_IMAGE_URLS = [
@@ -57,6 +61,7 @@ NIGHT_IMAGE_URLS = [
     "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/Good%20Night%209.jpeg"
 ]
 
+# ========== रैंडम प्रॉफिट के लिए टेम्पलेट ==========
 MORNING_TEMPLATES = [
     "*Good Morning!* आज ₹{amount} तक फायदेमंद रहेगा।",
     "*Good Morning!* कम से कम ₹{amount} का फायदा तय है आज।",
@@ -83,6 +88,7 @@ NIGHT_TEMPLATES = [
     "*Good Night All Members!* कल सीधा ₹{amount} का फायदा मिलेगा।"
 ]
 
+# ========== यूज़र को दिखने वाले रैंडम कैप्शन (प्रमोशन वाले) ==========
 PROMO_CAPTIONS = [
     "🚀 Live New Loot! Fast Join Telegram Channel",
     "💰 Exclusive Offer: Channel Join Karo aur Kamao",
@@ -96,6 +102,7 @@ PROMO_CAPTIONS = [
     "🎯 Target Complete: Channel Join Karo, Mil Sakta Hai Reward"
 ]
 
+# ========== कीवर्ड्स की लिस्ट ==========
 KEYWORDS = [
     "subscribe", "chat", "reply", "join", "joining", "refer", "register", "earning",
     "https", "invite", "@", "channel", "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो",
@@ -109,12 +116,13 @@ KEYWORDS = [
     "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link", "/join"
 ]
 
-# ========== HELPER FUNCTIONS ==========
+# ========== हेल्पर फंक्शंस ==========
 def get_today_index(length):
     india_tz = pytz.timezone('Asia/Kolkata')
     return int(datetime.now(india_tz).strftime("%j")) % length
 
 def send_channel_auto(templates, images, prefix_emoji):
+    """चैनल में ऑटो-पोस्ट भेजना – सुबह या रात"""
     try:
         profit = random.randint(100, 1000)
         idx = get_today_index(len(templates))
@@ -134,9 +142,10 @@ def send_channel_auto(templates, images, prefix_emoji):
         print(f"Auto-post error: {e}")
 
 def auto_poster():
+    """बैकग्राउंड थ्रेड – मॉर्निंग (4:30-5:00) und नाइट (23:30-00:00) के लिए"""
     india_tz = pytz.timezone('Asia/Kolkata')
-    morning_target = random.randint(30, 60)
-    night_target = random.randint(30, 60)
+    morning_target = random.randint(30, 60)   # 4:30 से 5:00 के बीच मिनट
+    night_target = random.randint(30, 60)     # 23:30 से 00:00 के बीच
     posted_morning = False
     posted_night = False
     last_day = None
@@ -154,13 +163,16 @@ def auto_poster():
                 morning_target = random.randint(30, 60)
                 night_target = random.randint(30, 60)
                 last_day = day
+                print(f"New targets: morning {morning_target} min after 4:00, night {night_target} min after 23:00")
 
+            # Morning (4:30-5:00)
             if not posted_morning and hour >= 4:
                 mins_from_4 = (hour - 4) * 60 + minute
                 if 30 <= mins_from_4 <= morning_target and mins_from_4 >= morning_target:
                     send_channel_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
                     posted_morning = True
 
+            # Night (23:30-00:00)
             if not posted_night:
                 if hour == 23:
                     mins_from_23 = minute
@@ -195,6 +207,7 @@ def keyword_found(text):
     return False
 
 def send_promo(chat_id):
+    """यूज़र को प्रमोशनल फोटो + रैंडम कैप्शन + चैनल बटन भेजना"""
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🚀 Start Earning", url=PROMO_CHANNEL_LINK))
     caption = random.choice(PROMO_CAPTIONS)
@@ -203,19 +216,18 @@ def send_promo(chat_id):
     except Exception as e:
         print(f"Send promo error: {e}")
 
-# ========== BOT HANDLERS ==========
+# ========== बॉट हैंडलर ==========
 @bot.message_handler(commands=['start'])
 def start_handler(msg):
     send_promo(msg.chat.id)
 
 @bot.message_handler(func=lambda m: True)
 def handle_all_messages(msg):
+    # OWNER को खुद का मैसेज फॉरवर्ड होने से बचाएं
     if OWNER_ID and msg.chat.id == OWNER_ID:
         return
 
-    if msg.text and keyword_found(msg.text):
-        send_promo(msg.chat.id)
-
+    # [FIX]: सबसे पहले सभी यूज़र मैसेज (chahe kuch bhi type kare) OWNER_ID पर फॉरवर्ड करो
     if OWNER_ID:
         try:
             user = msg.from_user
@@ -227,40 +239,31 @@ def handle_all_messages(msg):
         except Exception as e:
             print(f"Forward error: {e}")
 
-# ========== WEBHOOK & HEALTH ROUTE ==========
-@flask_app.route('/health')
-def health():
-    return "OK", 200
+    # [FIX]: फॉरवर्ड करने के बाद चेक करो, अगर कीवर्ड मिले तो प्रोमो भेजो
+    if msg.text and keyword_found(msg.text):
+        send_promo(msg.chat.id)
 
-@flask_app.route('/webhook', methods=['POST'])
-def webhook():
-    if request.headers.get('content-type') == 'application/json':
-        json_string = request.get_data().decode('utf-8')
-        update = telebot.types.Update.de_json(json_string)
-        bot.process_new_updates([update])
-        return '', 200
-    else:
-        return 'Forbidden', 403
+# ========== फ्लास्क थ्रेड (हेल्थ चेक के लिए) ==========
+def run_flask():
+    flask_app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
-# ========== MAIN RUNNER ==========
+# ========== मेन ==========
 if __name__ == "__main__":
+    # पहले से कोई वेबहुक हो तो हटाओ
+    try:
+        bot.delete_webhook()
+        print("Webhook deleted (if any).")
+    except:
+        pass
+
+    # ऑटो-पोस्टर थ्रेड शुरू करो
     threading.Thread(target=auto_poster, daemon=True).start()
-    print("Auto-poster thread initialized.")
+    print("Auto-poster started (morning 4:30-5:00, night 23:30-00:00).")
 
-    if WEBHOOK_URL:
-        try:
-            bot.remove_webhook()
-            bot.set_webhook(url=f"{WEBHOOK_URL.strip('/')}/webhook")
-            print(f"Webhook successfully set to: {WEBHOOK_URL}/webhook")
-        except Exception as e:
-            print(f"Failed to set webhook: {e}")
-    else:
-        try:
-            bot.remove_webhook()
-        except:
-            pass
-        print("WEBHOOK_URL not found, falling back to Polling...")
-        threading.Thread(target=bot.infinity_polling, daemon=True).start()
+    # हेल्थ चेक के लिए फ्लास्क थ्रेड (Render /health endpoint)
+    threading.Thread(target=run_flask, daemon=True).start()
+    print("Flask health server started on port 5000/10000.")
 
-    port = int(os.environ.get('PORT', 5000))
-    flask_app.run(host='0.0.0.0', port=port)
+    # पोलिंग शुरू करो – यह मुख्य थ्रेड को ब्लॉक करेगा
+    print("Bot started in polling mode...")
+    bot.infinity_polling()
