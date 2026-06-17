@@ -102,7 +102,7 @@ PROMO_CAPTIONS = [
     "🎯 Target Complete: Channel Join Karo, Mil Sakta Hai Reward"
 ]
 
-# ========== कीवर्ड्स की लिस्ट (बिना इनके भी सब कुछ प्रोमो भेजेगा – आप चाहें तो कम कर सकते हैं) ==========
+# ========== कीवर्ड्स की लिस्ट ==========
 KEYWORDS = [
     "subscribe", "chat", "reply", "join", "joining", "refer", "register", "earning",
     "https", "invite", "@", "channel", "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो",
@@ -223,18 +223,22 @@ def start_handler(msg):
 
 @bot.message_handler(func=lambda m: True)
 def handle_all_messages(msg):
+    # OWNER को खुद का मैसेज फॉरवर्ड होने से बचाएं
+    if OWNER_ID and msg.chat.id == OWNER_ID:
+        return
+
     # अगर कीवर्ड मिले तो प्रोमो भेजो
     if msg.text and keyword_found(msg.text):
         send_promo(msg.chat.id)
 
-    # सभी यूज़र मैसेज OWNER_ID पर फॉरवर्ड करो
-    if OWNER_ID and msg.chat.id != OWNER_ID:
+    # सभी यूज़र मैसेज (चाहे कीवर्ड हो या नॉर्मल हैलो) OWNER_ID पर फॉरवर्ड करो
+    if OWNER_ID:
         try:
             user = msg.from_user
-            name = user.first_name or ""
+            name = user.first_name or "No Name"
             if user.username:
                 name += f" (@{user.username})"
-            forward_text = f"📩 *नया मैसेज*\n👤 {name}\n🆔 `{user.id}`\n💬 {msg.text}"
+            forward_text = f"📩 *नया मैसेज*\n👤 {name}\n🆔 `{user.id}`\n💬 {msg.text if msg.text else '[Non-text message]'}"
             bot.send_message(OWNER_ID, forward_text, parse_mode='Markdown')
         except Exception as e:
             print(f"Forward error: {e}")
@@ -245,7 +249,7 @@ def run_flask():
 
 # ========== मेन ==========
 if __name__ == "__main__":
-    # पहले से कोई वेबहुक हो तो हटाओ (सुरक्षित रहने के लिए)
+    # पहले से कोई वेबहुक हो तो हटाओ
     try:
         bot.delete_webhook()
         print("Webhook deleted (if any).")
@@ -260,6 +264,6 @@ if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
     print("Flask health server started on port 5000/10000.")
 
-    # पोलिंग शुरू करो – यह मुख्य थ्रेड को ब्लॉक करेगा
+    # पोलिंग शुरू करो
     print("Bot started in polling mode...")
     bot.infinity_polling()
