@@ -5,11 +5,13 @@ import time
 import random
 import re
 from datetime import datetime
-from flask import Flask
+from flask import Flask, request, jsonify  # WhatsApp webhook data read karne ke liye
 import pytz
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from whatsapp_api_client_python import API  # Green-API wrapper package
 
 # ========== CONFIG ==========
+# 1. Telegram Configs
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN not set!")
@@ -23,8 +25,21 @@ except (TypeError, ValueError):
 PROMO_CHANNEL_ID = "-1002437678122"
 PROMO_CHANNEL_LINK = "https://t.me/Proper_Trending"
 
+# 2. WhatsApp Configs (Naye ENV variables jo Render pe daaloge)
+WHATSAPP_INSTANCE_ID = os.environ.get("WHATSAPP_INSTANCE_ID")
+WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN")
+PROMO_GROUP_ID = os.environ.get("PROMO_GROUP_ID", "7107664464@c.us")  # Initial group jid backup
+PROMO_GROUP_LINK = "https://chat.whatsapp.com/LikhieApnaLinkYahan"     # Aapka WhatsApp group link
+
+# Bots Initialization
 bot = telebot.TeleBot(BOT_TOKEN)
 flask_app = Flask(__name__)
+
+if WHATSAPP_INSTANCE_ID and WHATSAPP_TOKEN:
+    whatsapp_bot = API.GreenApi(WHATSAPP_INSTANCE_ID, WHATSAPP_TOKEN)
+else:
+    whatsapp_bot = None
+    print("WARNING: WHATSAPP_INSTANCE_ID ya WHATSAPP_TOKEN set nahi hai. WhatsApp features disabled.")
 
 @flask_app.route('/health')
 def health():
@@ -126,18 +141,33 @@ KEYWORDS = [
     "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link", "/join"
 ]
 
-# ========== हेल्पर फंक्शंस ==========
+# ========== HELPER FUNCTIONS ==========
 def get_today_index(length):
     india_tz = pytz.timezone('Asia/Kolkata')
     return int(datetime.now(india_tz).strftime("%j")) % length
 
-def send_channel_auto(templates, images, prefix_emoji):
+def send_whatsapp_media(chat_id, image_url, caption_text):
+    if not whatsapp_bot:
+        return
     try:
-        profit = random.randint(100, 1000)
-        # Random template + random image (independent — zyada variety)
-        template = random.choice(templates)
-        image_url = random.choice(images)
-        msg = template.format(amount=profit)
+        file_name = image_url.split('/')[-1] + ".jpg"
+        whatsapp_bot.sending.sendUrlFile(
+            chatId=chat_id,
+            urlFile=image_url,
+            fileName=file_name,
+            caption=caption_text
+        )
+    except Exception as e:
+        print(f"WhatsApp Media Error: {e}")
+
+def send_channel_auto(templates, images, prefix_emoji):
+    profit = random.randint(100, 1000)
+    template = random.choice(templates)
+    image_url = random.choice(images)
+    msg = template.format(amount=profit)
+    
+    # 1. Telegram Engine Post
+    try:
         sent = bot.send_photo(PROMO_CHANNEL_ID, image_url, caption=msg, parse_mode='Markdown')
         if sent:
             for emoji in ['👍', '❤️']:
@@ -146,7 +176,14 @@ def send_channel_auto(templates, images, prefix_emoji):
                 except:
                     pass
     except Exception as e:
-        print(f"Auto-post error: {e}")
+        print(f"Auto-post error (Telegram): {e}")
+
+    # 2. WhatsApp Engine Post
+    try:
+        wa_msg = f"{prefix_emoji} {msg}\n\n👉 Telegram: {PROMO_CHANNEL_LINK}\n👉 WhatsApp: {PROMO_GROUP_LINK}"
+        send_whatsapp_media(PROMO_GROUP_ID, image_url, wa_msg)
+    except Exception as e:
+        print(f"Auto-post error (WhatsApp): {e}")
 
 def auto_poster():
     india_tz = pytz.timezone('Asia/Kolkata')
@@ -212,7 +249,30 @@ def send_promo(chat_id):
     except Exception as e:
         print(f"Send promo error: {e}")
 
-# ========== बॉट हैंडलर ==========
+# ========== WHATSAPP INCOMING WEBHOOK ROUTE ==========
+@flask_app.route('/whatsapp-webhook', methods=['POST'])
+def whatsapp_webhook():
+    data = request.json
+    try:
+        if data.get("typeWebhook") == "incomingMessageReceived":
+            message_data = data.get("messageData", {})
+            sender_data = data.get("senderData", {})
+            chat_id = sender_data.get("chatId")
+            
+            text_message = ""
+            if message_data.get("typeMessage") == "textMessage":
+                text_message = message_data.get("textMessageData", {}).get("textMessage", "")
+            
+            if text_message:
+                if text_message.strip().lower() == "/start" or keyword_found(text_message):
+                    caption = random.choice(PROMO_CAPTIONS) + f"\n\n👉 Telegram: {PROMO_CHANNEL_LINK}\n👉 WhatsApp: {PROMO_GROUP_LINK}"
+                    send_whatsapp_media(chat_id, PROMO_IMAGE_URL, caption)
+    except Exception as e:
+        print(f"WhatsApp Webhook Error: {e}")
+        
+    return jsonify({"status": "success"}), 200
+
+# ========== TELEGRAM HANDLERS ==========
 @bot.message_handler(commands=['start'])
 def start_handler(msg):
     send_promo(msg.chat.id)
@@ -237,11 +297,10 @@ def handle_all_messages(msg):
     if msg.text and keyword_found(msg.text):
         send_promo(msg.chat.id)
 
-# ========== फ्लास्क रनर ==========
 def run_flask():
     flask_app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
-# ========== मेन रनर ==========
+# ========== MAIN RUNNER ==========
 if __name__ == "__main__":
     try:
         bot.delete_webhook()
@@ -251,5 +310,5 @@ if __name__ == "__main__":
     threading.Thread(target=auto_poster, daemon=True).start()
     threading.Thread(target=run_flask, daemon=True).start()
 
-    print("Bot is running with standard python main.py setup...")
+    print("Combined Telegram + WhatsApp Bot is running...")
     bot.infinity_polling()
