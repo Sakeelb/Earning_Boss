@@ -1,5 +1,5 @@
 pyTelegramBotAPI==4.20.0
 Flask==3.0.2
 pytz==2024.1
-whatsapp-api-client-python==0.2.1
+whatsapp-api-client-python==0.0.54
 requests==2.31.0
