@@ -1,4 +1,5 @@
 pyTelegramBotAPI
+whatsapp-api-client-python==0.2.1
 flask
 pytz
 gunicorn
