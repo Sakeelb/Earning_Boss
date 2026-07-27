@@ -120,7 +120,6 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 # ========== HELPER FUNCTIONS ==========
 def send_channel_auto(templates, images, prefix_emoji):
-    """Auto‑post to Telegram channel only"""
     profit = random.randint(100, 1000)
     template = random.choice(templates)
     image_url = random.choice(images)
@@ -159,14 +158,12 @@ def auto_poster():
                 night_target = random.randint(29, 59)
                 last_day = day
 
-            # Morning post: 4:30 AM to 5:00 AM
             if not posted_morning and hour >= 4:
                 mins_from_4 = (hour - 4) * 60 + minute
                 if mins_from_4 >= morning_target:
                     send_channel_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
                     posted_morning = True
 
-            # Night post: 11:29 PM to 11:59 PM guaranteed
             if not posted_night and hour == 23 and minute >= night_target:
                 send_channel_auto(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
                 posted_night = True
@@ -182,7 +179,6 @@ def keyword_found(text):
     text = re.sub(r'[^\w\s@/\.]', '', text)
     for kw in KEYWORDS:
         kw_low = kw.lower()
-        # specific patterns
         if kw_low in ["https", "@", "t.me", "bit.ly"]:
             if kw_low in text:
                 return True
@@ -209,7 +205,6 @@ def start_handler(msg):
 
 @bot.message_handler(func=lambda m: True)
 def handle_all_messages(msg):
-    # Forward every user message (except owner) to owner
     if OWNER_ID != 0 and msg.from_user.id == OWNER_ID:
         return
 
@@ -225,18 +220,30 @@ def handle_all_messages(msg):
         except Exception as e:
             print(f"Forwarding failed: {e}")
 
-    # If message contains keyword, send promo
     if msg.text and keyword_found(msg.text):
         send_promo(msg.chat.id)
 
 # ========== MAIN ==========
 if __name__ == "__main__":
+    # 1. Clear any existing webhook
     try:
         bot.delete_webhook()
-    except:
-        pass
+        print("Webhook cleared.")
+    except Exception as e:
+        print(f"Error clearing webhook: {e}")
 
+    # 2. Wait for Telegram to propagate the change
+    time.sleep(2)
+
+    # 3. Start auto-poster thread
     threading.Thread(target=auto_poster, daemon=True).start()
 
-    print("Telegram bot is running...")
-    bot.infinity_polling()
+    # 4. Start polling with retry logic to handle 409 conflicts
+    print("Telegram bot is starting...")
+    while True:
+        try:
+            # none_stop=True => keep polling even on errors, interval=0 => no delay between requests
+            bot.polling(none_stop=True, interval=0, timeout=20)
+        except Exception as e:
+            print(f"Polling crashed: {e}. Restarting in 10 seconds...")
+            time.sleep(10)
