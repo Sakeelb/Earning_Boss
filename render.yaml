@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: handicrafts-telegram-bot
+    name: earning-boss
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: python main.py
