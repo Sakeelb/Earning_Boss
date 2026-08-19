@@ -26,6 +26,7 @@ PROMO_CHANNEL_LINK = "https://t.me/Proper_Trending"
 # ========== IMAGE URLs ==========
 PROMO_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
 
+# Handicrafts related images
 MORNING_IMAGE_URLS = [
     "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&q=80",
     "https://images.unsplash.com/photo-1532372320572-cda25653a694?w=800&q=80",
@@ -94,7 +95,6 @@ PROMO_CAPTIONS = [
 
 # ========== KEYWORDS ==========
 KEYWORDS = [
-    # Existing keywords
     "subscribe", "chat", "reply", "join", "joining", "refer", "register", "earning",
     "https", "invite", "@", "channel", "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो",
     "ज्वाइन", "चैनल", "जॉइन", "link", "promo", "reward", "bonus", "gift", "win", "offer", "loot",
@@ -106,7 +106,6 @@ KEYWORDS = [
     "ethereum earning", "online job", "work from home", "part time job", "full time job",
     "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link", "/join",
     
-    # Handicrafts keywords
     "handicrafts", "हस्तशिल्प", "handmade", "हाथ से बना", "marble", "संगमरमर",
     "white marble", "सफेद संगमरमर", "stone art", "पत्थर कला", "crafts", "शिल्प",
     "handicraft items", "हस्तशिल्प सामान", "home decor", "घर सजावट",
@@ -135,13 +134,13 @@ def home():
     <h1>🏺 Handicrafts Telegram Bot</h1>
     <p>Bot is running successfully!</p>
     <p>Status: Active ✅</p>
-    <p>⏰ Auto-Poster Schedule:</p>
+    <p>Services Running:</p>
     <ul>
-        <li>🌅 Morning: Between 4:30 AM - 5:00 AM (Random)</li>
-        <li>🌙 Night: Between 11:30 PM - 11:59 PM (Random)</li>
+        <li>🤖 Telegram Bot</li>
+        <li>⏰ Auto-Poster (Morning & Night)</li>
+        <li>📨 Message Forwarding</li>
+        <li>🔍 Keyword Detection</li>
     </ul>
-    </body>
-    </html>
     """
 
 @app.route('/health')
@@ -153,7 +152,6 @@ def run_flask():
 
 # ========== HELPER FUNCTIONS ==========
 def send_channel_auto(templates, images, prefix_emoji):
-    """Send automated handicrafts posts to channel"""
     profit = random.randint(500, 5000)
     template = random.choice(templates)
     image_url = random.choice(images)
@@ -189,8 +187,9 @@ def send_channel_auto(templates, images, prefix_emoji):
         print(f"❌ Auto-post error: {e}")
 
 def auto_poster():
-    """Auto-poster with exact timing: Morning 4:30-5:00, Night 11:30-11:59"""
     india_tz = pytz.timezone('Asia/Kolkata')
+    morning_time = random.randint(30, 60)
+    night_time = random.randint(29, 59)
     morning_sent_today = False
     night_sent_today = False
     today_date = None
@@ -202,38 +201,37 @@ def auto_poster():
             minute = now.minute
             current_date = now.date()
             
-            # Reset daily flags at midnight
             if current_date != today_date:
                 morning_sent_today = False
                 night_sent_today = False
                 today_date = current_date
-                print(f"📅 New day started: {current_date}")
+                morning_time = random.randint(30, 60)
+                night_time = random.randint(29, 59)
+                print(f"📅 New day! Morning target: {morning_time}min after 4am, Night target: {night_time}min after 11pm")
 
-            # ========== MORNING POST: Between 4:30 AM and 5:00 AM ==========
-            if not morning_sent_today and hour == 4:
-                # Random time between 30-59 minutes (4:30 to 4:59)
-                morning_target = random.randint(30, 59)
-                if minute >= morning_target:
+            if not morning_sent_today and 4 <= hour < 12:
+                if hour == 4:
+                    mins_passed = minute
+                else:
+                    mins_passed = (hour - 4) * 60 + minute
+                
+                if mins_passed >= morning_time:
                     print(f"🌅 Sending morning handicrafts post at {now.strftime('%H:%M')}")
                     send_channel_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
                     morning_sent_today = True
-                    
-            # Backup: If 4 AM missed, send at 5:00 AM
-            if not morning_sent_today and hour == 5 and minute >= 0:
-                print(f"🌅 Sending backup morning post at {now.strftime('%H:%M')}")
-                send_channel_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
-                morning_sent_today = True
 
-            # ========== NIGHT POST: Between 11:30 PM and 11:59 PM ==========
             if not night_sent_today and hour == 23:
-                # Random time between 30-59 minutes (11:30 to 11:59)
-                night_target = random.randint(30, 59)
-                if minute >= night_target:
+                if minute >= night_time:
                     print(f"🌙 Sending night handicrafts post at {now.strftime('%H:%M')}")
                     send_channel_auto(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
                     night_sent_today = True
 
-            time.sleep(30)  # Check every 30 seconds for more accuracy
+            if not morning_sent_today and hour == 11 and minute >= 0:
+                print(f"⏰ Sending backup morning handicrafts post at {now.strftime('%H:%M')}")
+                send_channel_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
+                morning_sent_today = True
+
+            time.sleep(60)
             
         except Exception as e:
             print(f"❌ Auto-poster error: {e}")
@@ -257,7 +255,6 @@ def keyword_found(text):
     return False
 
 def send_promo(chat_id):
-    """Send handicrafts promotion message with reply"""
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🏺 View Handicrafts", url=PROMO_CHANNEL_LINK))
     markup.add(InlineKeyboardButton("📞 Contact Seller", url="https://t.me/Proper_Trending"))
@@ -267,7 +264,6 @@ def send_promo(chat_id):
     caption += "\n⚪ Natural Stone Art Pieces"
     caption += "\n✨ Hand Polished Products"
     caption += "\n📦 Wholesale & Retail Available"
-    caption += "\n\n📩 *Reply to this message for orders!*"
     caption += f"\n🔗 {PROMO_CHANNEL_LINK}"
     
     try:
@@ -296,8 +292,7 @@ We offer premium handmade handicrafts:
 📦 *Wholesale Available*
 📞 *Contact for Orders*
 
-Click below to see our collection!
-📩 *Reply to this message for orders!*"""
+Click below to see our collection!"""
     
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🏺 View Collection", url=PROMO_CHANNEL_LINK))
@@ -311,37 +306,22 @@ Click below to see our collection!
 
 @bot.message_handler(func=lambda m: True)
 def handle_all_messages(msg):
-    # Forward ALL messages to owner (except owner's own)
     if OWNER_ID != 0 and msg.from_user.id == OWNER_ID:
         return
 
-    # ========== FORWARD ALL MESSAGES TO OWNER ==========
     if OWNER_ID != 0:
         try:
             user = msg.from_user
             name = f"{user.first_name} {user.last_name or ''}".strip()
             if user.username:
                 name += f" (@{user.username})"
-            
-            # Get message content
-            if msg.text:
-                text_content = msg.text
-            elif msg.photo:
-                text_content = "📷 [Photo]"
-            elif msg.video:
-                text_content = "🎥 [Video]"
-            elif msg.document:
-                text_content = "📄 [Document]"
-            else:
-                text_content = "[Other message type]"
-            
+            text_content = msg.text if msg.text else "[Non-text message]"
             forward_text = f"📩 *New Handicrafts Inquiry*\n👤 {name}\n🆔 `{user.id}`\n💬 {text_content}"
             bot.send_message(OWNER_ID, forward_text, parse_mode='Markdown')
             print(f"📨 Forwarded message from {user.id}")
         except Exception as e:
             print(f"❌ Forwarding failed: {e}")
 
-    # ========== KEYWORD DETECTION AND PROMO REPLY ==========
     if msg.text and keyword_found(msg.text):
         send_promo(msg.chat.id)
 
@@ -350,13 +330,10 @@ if __name__ == "__main__":
     print("=" * 50)
     print("🏺 HANDICRAFTS TELEGRAM BOT STARTING")
     print("=" * 50)
+    print(f"🤖 Bot Token: {'*' * len(BOT_TOKEN[:10])}")
     print(f"👤 Owner ID: {OWNER_ID}")
     print(f"📢 Channel ID: {PROMO_CHANNEL_ID}")
     print(f"🔗 Channel Link: {PROMO_CHANNEL_LINK}")
-    print("=" * 50)
-    print("⏰ SCHEDULE:")
-    print("   🌅 Morning: 4:30 AM - 5:00 AM (Random)")
-    print("   🌙 Night: 11:30 PM - 11:59 PM (Random)")
     print("=" * 50)
     
     # Start Flask server for keep-alive
@@ -364,22 +341,29 @@ if __name__ == "__main__":
     flask_thread.start()
     print("🌐 Flask keep-alive server started on port 8080")
     
-    # IMPORTANT: Force stop all existing connections
+    # IMPORTANT: Stop any existing polling and clear webhook
     try:
         bot.remove_webhook()
-        print("🗑️ Webhook removed")
-        bot.get_updates(offset=-1, timeout=1)
-        print("📨 Updates cleared")
-        time.sleep(2)
+        print("🗑️ Webhook removed successfully")
     except Exception as e:
-        print(f"⚠️ Error during cleanup: {e}")
+        print(f"⚠️ Error removing webhook: {e}")
+    
+    # Wait for Telegram to process
+    time.sleep(5)
+    
+    # Clear updates queue
+    try:
+        bot.get_updates(offset=-1, timeout=1)
+        print("📨 Updates queue cleared")
+    except Exception as e:
+        print(f"⚠️ Error clearing updates: {e}")
 
     # Start auto-poster thread
     auto_thread = threading.Thread(target=auto_poster, daemon=True)
     auto_thread.start()
     print("⏰ Auto-poster thread started")
 
-    # Start polling
+    # Start polling with error handling
     print("📡 Starting polling...")
     print("=" * 50)
     print("✅ BOT IS LIVE AND RUNNING!")
@@ -387,25 +371,15 @@ if __name__ == "__main__":
     
     while True:
         try:
-            bot.polling(
-                non_stop=True, 
-                interval=0, 
-                timeout=20, 
-                long_polling_timeout=10,
-                allowed_updates=['message', 'callback_query']
-            )
+            # Use lower timeout and add retry logic
+            bot.polling(none_stop=True, interval=0, timeout=20, long_polling_timeout=10)
         except Exception as e:
-            error_msg = str(e)
-            if "409" in error_msg or "Conflict" in error_msg:
-                print("⚠️ 409 Conflict detected - resetting connection...")
-                try:
-                    bot.remove_webhook()
-                    bot.get_updates(offset=-1, timeout=1)
-                    time.sleep(5)
-                except:
-                    pass
-                continue
-            else:
-                print(f"❌ Polling error: {e}")
-                print("🔄 Restarting in 15 seconds...")
-                time.sleep(15)
+            print(f"❌ Polling error: {e}")
+            print("🔄 Restarting polling in 15 seconds...")
+            time.sleep(15)
+            try:
+                bot.remove_webhook()
+                print("🔄 Webhook removed, reconnecting...")
+            except:
+                pass
+            time.sleep(5)
