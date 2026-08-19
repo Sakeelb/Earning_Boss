@@ -26,7 +26,6 @@ PROMO_CHANNEL_LINK = "https://t.me/Proper_Trending"
 # ========== IMAGE URLs ==========
 PROMO_IMAGE_URL = "https://raw.githubusercontent.com/Sakeelb/Earning_Boss/refs/heads/main/New/1781241774791.png"
 
-# Handicrafts related images
 MORNING_IMAGE_URLS = [
     "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=800&q=80",
     "https://images.unsplash.com/photo-1532372320572-cda25653a694?w=800&q=80",
@@ -105,21 +104,13 @@ KEYWORDS = [
     "upi earning", "paytm cash", "google pay offer", "crypto earning", "bitcoin earning",
     "ethereum earning", "online job", "work from home", "part time job", "full time job",
     "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link", "/join",
-    
     "handicrafts", "हस्तशिल्प", "handmade", "हाथ से बना", "marble", "संगमरमर",
     "white marble", "सफेद संगमरमर", "stone art", "पत्थर कला", "crafts", "शिल्प",
     "handicraft items", "हस्तशिल्प सामान", "home decor", "घर सजावट",
     "traditional crafts", "पारंपरिक शिल्प", "art pieces", "कला के टुकड़े",
     "handmade items", "हस्तनिर्मित वस्तुएं", "natural stone", "प्राकृतिक पत्थर",
     "marble items", "संगमरमर सामान", "hand polish", "हाथ पॉलिश",
-    "crafts business", "शिल्प व्यवसाय", "wholesale handicrafts", "थोक हस्तशिल्प",
-    "artisan crafts", "कारीगर शिल्प", "handmade decor", "हस्तनिर्मित सजावट",
-    "stone crafts", "पत्थर शिल्प", "marble art", "संगमरमर कला",
-    "craft products", "शिल्प उत्पाद", "handicraft dealer", "हस्तशिल्प विक्रेता",
-    "handicrafts wholesale", "हस्तशिल्प थोक", "marble handicraft", "संगमरमर हस्तशिल्प",
-    "stone handicraft", "पत्थर हस्तशिल्प", "handmade gifts", "हस्तनिर्मित उपहार",
-    "craft items", "शिल्प वस्तुएं", "handicrafts business", "हस्तशिल्प व्यवसाय",
-    "मार्बल आर्ट", "स्टोन डेकोर", "हैंडमेड पॉलिश", "क्राफ्ट कलेक्शन"
+    "crafts business", "शिल्प व्यवसाय", "wholesale handicrafts", "थोक हस्तशिल्प"
 ]
 
 # ========== BOT INIT ==========
@@ -134,13 +125,8 @@ def home():
     <h1>🏺 Handicrafts Telegram Bot</h1>
     <p>Bot is running successfully!</p>
     <p>Status: Active ✅</p>
-    <p>Services Running:</p>
-    <ul>
-        <li>🤖 Telegram Bot</li>
-        <li>⏰ Auto-Poster (Morning & Night)</li>
-        <li>📨 Message Forwarding</li>
-        <li>🔍 Keyword Detection</li>
-    </ul>
+    </body>
+    </html>
     """
 
 @app.route('/health')
@@ -162,9 +148,7 @@ def send_channel_auto(templates, images, prefix_emoji):
         "Hand Carved Marble Decor",
         "Traditional Stone Crafts",
         "Hand Polished Marble Products",
-        "Exclusive Handicrafts Collection",
-        "Premium Marble Artifacts",
-        "Handmade Stone Decor Items"
+        "Exclusive Handicrafts Collection"
     ]
     
     msg = template.format(amount=profit)
@@ -207,7 +191,6 @@ def auto_poster():
                 today_date = current_date
                 morning_time = random.randint(30, 60)
                 night_time = random.randint(29, 59)
-                print(f"📅 New day! Morning target: {morning_time}min after 4am, Night target: {night_time}min after 11pm")
 
             if not morning_sent_today and 4 <= hour < 12:
                 if hour == 4:
@@ -216,18 +199,15 @@ def auto_poster():
                     mins_passed = (hour - 4) * 60 + minute
                 
                 if mins_passed >= morning_time:
-                    print(f"🌅 Sending morning handicrafts post at {now.strftime('%H:%M')}")
                     send_channel_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
                     morning_sent_today = True
 
             if not night_sent_today and hour == 23:
                 if minute >= night_time:
-                    print(f"🌙 Sending night handicrafts post at {now.strftime('%H:%M')}")
                     send_channel_auto(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
                     night_sent_today = True
 
             if not morning_sent_today and hour == 11 and minute >= 0:
-                print(f"⏰ Sending backup morning handicrafts post at {now.strftime('%H:%M')}")
                 send_channel_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
                 morning_sent_today = True
 
@@ -268,7 +248,6 @@ def send_promo(chat_id):
     
     try:
         bot.send_photo(chat_id, PROMO_IMAGE_URL, caption=caption, parse_mode='Markdown', reply_markup=markup)
-        print(f"✅ Promo sent to user: {chat_id}")
     except Exception as e:
         print(f"❌ Send promo error: {e}")
 
@@ -300,7 +279,6 @@ Click below to see our collection!"""
     
     try:
         bot.send_message(msg.chat.id, welcome_text, parse_mode='Markdown', reply_markup=markup)
-        print(f"✅ Welcome message sent to user: {msg.from_user.id}")
     except Exception as e:
         print(f"❌ Start handler error: {e}")
 
@@ -318,7 +296,6 @@ def handle_all_messages(msg):
             text_content = msg.text if msg.text else "[Non-text message]"
             forward_text = f"📩 *New Handicrafts Inquiry*\n👤 {name}\n🆔 `{user.id}`\n💬 {text_content}"
             bot.send_message(OWNER_ID, forward_text, parse_mode='Markdown')
-            print(f"📨 Forwarded message from {user.id}")
         except Exception as e:
             print(f"❌ Forwarding failed: {e}")
 
@@ -330,7 +307,6 @@ if __name__ == "__main__":
     print("=" * 50)
     print("🏺 HANDICRAFTS TELEGRAM BOT STARTING")
     print("=" * 50)
-    print(f"🤖 Bot Token: {'*' * len(BOT_TOKEN[:10])}")
     print(f"👤 Owner ID: {OWNER_ID}")
     print(f"📢 Channel ID: {PROMO_CHANNEL_ID}")
     print(f"🔗 Channel Link: {PROMO_CHANNEL_LINK}")
@@ -341,29 +317,27 @@ if __name__ == "__main__":
     flask_thread.start()
     print("🌐 Flask keep-alive server started on port 8080")
     
-    # IMPORTANT: Stop any existing polling and clear webhook
+    # IMPORTANT: Force stop all existing connections
     try:
+        # Remove webhook
         bot.remove_webhook()
-        print("🗑️ Webhook removed successfully")
-    except Exception as e:
-        print(f"⚠️ Error removing webhook: {e}")
-    
-    # Wait for Telegram to process
-    time.sleep(5)
-    
-    # Clear updates queue
-    try:
+        print("🗑️ Webhook removed")
+        
+        # Clear all pending updates
         bot.get_updates(offset=-1, timeout=1)
-        print("📨 Updates queue cleared")
+        print("📨 Updates cleared")
+        
+        # Wait for Telegram to process
+        time.sleep(2)
     except Exception as e:
-        print(f"⚠️ Error clearing updates: {e}")
+        print(f"⚠️ Error during cleanup: {e}")
 
     # Start auto-poster thread
     auto_thread = threading.Thread(target=auto_poster, daemon=True)
     auto_thread.start()
     print("⏰ Auto-poster thread started")
 
-    # Start polling with error handling
+    # Start polling with proper error handling
     print("📡 Starting polling...")
     print("=" * 50)
     print("✅ BOT IS LIVE AND RUNNING!")
@@ -371,15 +345,26 @@ if __name__ == "__main__":
     
     while True:
         try:
-            # Use lower timeout and add retry logic
-            bot.polling(none_stop=True, interval=0, timeout=20, long_polling_timeout=10)
+            # Use non_stop=True and proper timeouts
+            bot.polling(
+                non_stop=True, 
+                interval=0, 
+                timeout=20, 
+                long_polling_timeout=10,
+                allowed_updates=['message', 'callback_query']
+            )
         except Exception as e:
-            print(f"❌ Polling error: {e}")
-            print("🔄 Restarting polling in 15 seconds...")
-            time.sleep(15)
-            try:
-                bot.remove_webhook()
-                print("🔄 Webhook removed, reconnecting...")
-            except:
-                pass
-            time.sleep(5)
+            error_msg = str(e)
+            if "409" in error_msg or "Conflict" in error_msg:
+                print("⚠️ 409 Conflict detected - resetting connection...")
+                try:
+                    bot.remove_webhook()
+                    bot.get_updates(offset=-1, timeout=1)
+                    time.sleep(5)
+                except:
+                    pass
+                continue
+            else:
+                print(f"❌ Polling error: {e}")
+                print("🔄 Restarting in 15 seconds...")
+                time.sleep(15)
