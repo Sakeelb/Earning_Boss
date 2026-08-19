@@ -401,11 +401,11 @@ if __name__ == "__main__":
                 try:
                     bot.remove_webhook()
                     bot.get_updates(offset=-1, timeout=1)
-                    time.sleep(5)
+                    time.sleep(0)
                 except:
                     pass
                 continue
             else:
                 print(f"❌ Polling error: {e}")
                 print("🔄 Restarting in 15 seconds...")
-                time.sleep(15)
+                time.sleep(0)
