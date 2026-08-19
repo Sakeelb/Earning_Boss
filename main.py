@@ -94,6 +94,7 @@ PROMO_CAPTIONS = [
 
 # ========== KEYWORDS ==========
 KEYWORDS = [
+    # Existing keywords
     "subscribe", "chat", "reply", "join", "joining", "refer", "register", "earning",
     "https", "invite", "@", "channel", "मेरे चैनल", "मेरा चैनल", "चैनल को", "follow", "फॉलो",
     "ज्वाइन", "चैनल", "जॉइन", "link", "promo", "reward", "bonus", "gift", "win", "offer", "loot",
@@ -104,13 +105,22 @@ KEYWORDS = [
     "upi earning", "paytm cash", "google pay offer", "crypto earning", "bitcoin earning",
     "ethereum earning", "online job", "work from home", "part time job", "full time job",
     "referred", "referring", "ref", "referal", "refer code", "joining bonus", "joining link", "/join",
+    
+    # Handicrafts keywords
     "handicrafts", "हस्तशिल्प", "handmade", "हाथ से बना", "marble", "संगमरमर",
     "white marble", "सफेद संगमरमर", "stone art", "पत्थर कला", "crafts", "शिल्प",
     "handicraft items", "हस्तशिल्प सामान", "home decor", "घर सजावट",
     "traditional crafts", "पारंपरिक शिल्प", "art pieces", "कला के टुकड़े",
     "handmade items", "हस्तनिर्मित वस्तुएं", "natural stone", "प्राकृतिक पत्थर",
     "marble items", "संगमरमर सामान", "hand polish", "हाथ पॉलिश",
-    "crafts business", "शिल्प व्यवसाय", "wholesale handicrafts", "थोक हस्तशिल्प"
+    "crafts business", "शिल्प व्यवसाय", "wholesale handicrafts", "थोक हस्तशिल्प",
+    "artisan crafts", "कारीगर शिल्प", "handmade decor", "हस्तनिर्मित सजावट",
+    "stone crafts", "पत्थर शिल्प", "marble art", "संगमरमर कला",
+    "craft products", "शिल्प उत्पाद", "handicraft dealer", "हस्तशिल्प विक्रेता",
+    "handicrafts wholesale", "हस्तशिल्प थोक", "marble handicraft", "संगमरमर हस्तशिल्प",
+    "stone handicraft", "पत्थर हस्तशिल्प", "handmade gifts", "हस्तनिर्मित उपहार",
+    "craft items", "शिल्प वस्तुएं", "handicrafts business", "हस्तशिल्प व्यवसाय",
+    "मार्बल आर्ट", "स्टोन डेकोर", "हैंडमेड पॉलिश", "क्राफ्ट कलेक्शन"
 ]
 
 # ========== BOT INIT ==========
@@ -125,6 +135,11 @@ def home():
     <h1>🏺 Handicrafts Telegram Bot</h1>
     <p>Bot is running successfully!</p>
     <p>Status: Active ✅</p>
+    <p>⏰ Auto-Poster Schedule:</p>
+    <ul>
+        <li>🌅 Morning: Between 4:30 AM - 5:00 AM (Random)</li>
+        <li>🌙 Night: Between 11:30 PM - 11:59 PM (Random)</li>
+    </ul>
     </body>
     </html>
     """
@@ -138,6 +153,7 @@ def run_flask():
 
 # ========== HELPER FUNCTIONS ==========
 def send_channel_auto(templates, images, prefix_emoji):
+    """Send automated handicrafts posts to channel"""
     profit = random.randint(500, 5000)
     template = random.choice(templates)
     image_url = random.choice(images)
@@ -148,7 +164,9 @@ def send_channel_auto(templates, images, prefix_emoji):
         "Hand Carved Marble Decor",
         "Traditional Stone Crafts",
         "Hand Polished Marble Products",
-        "Exclusive Handicrafts Collection"
+        "Exclusive Handicrafts Collection",
+        "Premium Marble Artifacts",
+        "Handmade Stone Decor Items"
     ]
     
     msg = template.format(amount=profit)
@@ -171,9 +189,8 @@ def send_channel_auto(templates, images, prefix_emoji):
         print(f"❌ Auto-post error: {e}")
 
 def auto_poster():
+    """Auto-poster with exact timing: Morning 4:30-5:00, Night 11:30-11:59"""
     india_tz = pytz.timezone('Asia/Kolkata')
-    morning_time = random.randint(30, 60)
-    night_time = random.randint(29, 59)
     morning_sent_today = False
     night_sent_today = False
     today_date = None
@@ -185,33 +202,38 @@ def auto_poster():
             minute = now.minute
             current_date = now.date()
             
+            # Reset daily flags at midnight
             if current_date != today_date:
                 morning_sent_today = False
                 night_sent_today = False
                 today_date = current_date
-                morning_time = random.randint(30, 60)
-                night_time = random.randint(29, 59)
+                print(f"📅 New day started: {current_date}")
 
-            if not morning_sent_today and 4 <= hour < 12:
-                if hour == 4:
-                    mins_passed = minute
-                else:
-                    mins_passed = (hour - 4) * 60 + minute
-                
-                if mins_passed >= morning_time:
+            # ========== MORNING POST: Between 4:30 AM and 5:00 AM ==========
+            if not morning_sent_today and hour == 4:
+                # Random time between 30-59 minutes (4:30 to 4:59)
+                morning_target = random.randint(30, 59)
+                if minute >= morning_target:
+                    print(f"🌅 Sending morning handicrafts post at {now.strftime('%H:%M')}")
                     send_channel_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
                     morning_sent_today = True
-
-            if not night_sent_today and hour == 23:
-                if minute >= night_time:
-                    send_channel_auto(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
-                    night_sent_today = True
-
-            if not morning_sent_today and hour == 11 and minute >= 0:
+                    
+            # Backup: If 4 AM missed, send at 5:00 AM
+            if not morning_sent_today and hour == 5 and minute >= 0:
+                print(f"🌅 Sending backup morning post at {now.strftime('%H:%M')}")
                 send_channel_auto(MORNING_TEMPLATES, MORNING_IMAGE_URLS, "☀️")
                 morning_sent_today = True
 
-            time.sleep(60)
+            # ========== NIGHT POST: Between 11:30 PM and 11:59 PM ==========
+            if not night_sent_today and hour == 23:
+                # Random time between 30-59 minutes (11:30 to 11:59)
+                night_target = random.randint(30, 59)
+                if minute >= night_target:
+                    print(f"🌙 Sending night handicrafts post at {now.strftime('%H:%M')}")
+                    send_channel_auto(NIGHT_TEMPLATES, NIGHT_IMAGE_URLS, "🌙")
+                    night_sent_today = True
+
+            time.sleep(30)  # Check every 30 seconds for more accuracy
             
         except Exception as e:
             print(f"❌ Auto-poster error: {e}")
@@ -235,6 +257,7 @@ def keyword_found(text):
     return False
 
 def send_promo(chat_id):
+    """Send handicrafts promotion message with reply"""
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🏺 View Handicrafts", url=PROMO_CHANNEL_LINK))
     markup.add(InlineKeyboardButton("📞 Contact Seller", url="https://t.me/Proper_Trending"))
@@ -244,10 +267,12 @@ def send_promo(chat_id):
     caption += "\n⚪ Natural Stone Art Pieces"
     caption += "\n✨ Hand Polished Products"
     caption += "\n📦 Wholesale & Retail Available"
+    caption += "\n\n📩 *Reply to this message for orders!*"
     caption += f"\n🔗 {PROMO_CHANNEL_LINK}"
     
     try:
         bot.send_photo(chat_id, PROMO_IMAGE_URL, caption=caption, parse_mode='Markdown', reply_markup=markup)
+        print(f"✅ Promo sent to user: {chat_id}")
     except Exception as e:
         print(f"❌ Send promo error: {e}")
 
@@ -271,7 +296,8 @@ We offer premium handmade handicrafts:
 📦 *Wholesale Available*
 📞 *Contact for Orders*
 
-Click below to see our collection!"""
+Click below to see our collection!
+📩 *Reply to this message for orders!*"""
     
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton("🏺 View Collection", url=PROMO_CHANNEL_LINK))
@@ -279,26 +305,43 @@ Click below to see our collection!"""
     
     try:
         bot.send_message(msg.chat.id, welcome_text, parse_mode='Markdown', reply_markup=markup)
+        print(f"✅ Welcome message sent to user: {msg.from_user.id}")
     except Exception as e:
         print(f"❌ Start handler error: {e}")
 
 @bot.message_handler(func=lambda m: True)
 def handle_all_messages(msg):
+    # Forward ALL messages to owner (except owner's own)
     if OWNER_ID != 0 and msg.from_user.id == OWNER_ID:
         return
 
+    # ========== FORWARD ALL MESSAGES TO OWNER ==========
     if OWNER_ID != 0:
         try:
             user = msg.from_user
             name = f"{user.first_name} {user.last_name or ''}".strip()
             if user.username:
                 name += f" (@{user.username})"
-            text_content = msg.text if msg.text else "[Non-text message]"
+            
+            # Get message content
+            if msg.text:
+                text_content = msg.text
+            elif msg.photo:
+                text_content = "📷 [Photo]"
+            elif msg.video:
+                text_content = "🎥 [Video]"
+            elif msg.document:
+                text_content = "📄 [Document]"
+            else:
+                text_content = "[Other message type]"
+            
             forward_text = f"📩 *New Handicrafts Inquiry*\n👤 {name}\n🆔 `{user.id}`\n💬 {text_content}"
             bot.send_message(OWNER_ID, forward_text, parse_mode='Markdown')
+            print(f"📨 Forwarded message from {user.id}")
         except Exception as e:
             print(f"❌ Forwarding failed: {e}")
 
+    # ========== KEYWORD DETECTION AND PROMO REPLY ==========
     if msg.text and keyword_found(msg.text):
         send_promo(msg.chat.id)
 
@@ -311,6 +354,10 @@ if __name__ == "__main__":
     print(f"📢 Channel ID: {PROMO_CHANNEL_ID}")
     print(f"🔗 Channel Link: {PROMO_CHANNEL_LINK}")
     print("=" * 50)
+    print("⏰ SCHEDULE:")
+    print("   🌅 Morning: 4:30 AM - 5:00 AM (Random)")
+    print("   🌙 Night: 11:30 PM - 11:59 PM (Random)")
+    print("=" * 50)
     
     # Start Flask server for keep-alive
     flask_thread = threading.Thread(target=run_flask, daemon=True)
@@ -319,15 +366,10 @@ if __name__ == "__main__":
     
     # IMPORTANT: Force stop all existing connections
     try:
-        # Remove webhook
         bot.remove_webhook()
         print("🗑️ Webhook removed")
-        
-        # Clear all pending updates
         bot.get_updates(offset=-1, timeout=1)
         print("📨 Updates cleared")
-        
-        # Wait for Telegram to process
         time.sleep(2)
     except Exception as e:
         print(f"⚠️ Error during cleanup: {e}")
@@ -337,7 +379,7 @@ if __name__ == "__main__":
     auto_thread.start()
     print("⏰ Auto-poster thread started")
 
-    # Start polling with proper error handling
+    # Start polling
     print("📡 Starting polling...")
     print("=" * 50)
     print("✅ BOT IS LIVE AND RUNNING!")
@@ -345,7 +387,6 @@ if __name__ == "__main__":
     
     while True:
         try:
-            # Use non_stop=True and proper timeouts
             bot.polling(
                 non_stop=True, 
                 interval=0, 
